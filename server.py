@@ -3,7 +3,7 @@ from starlette.responses import RedirectResponse
 from checker import Checker
 from fastapi import FastAPI
 from config import Configuration
-from distutils.util import strtobool
+from str2bool import str2bool
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -41,7 +41,7 @@ app.mount("/", StaticFiles(directory="front"), name="static")
 if __name__ == "__main__":
     checker = Checker()
     config = Configuration()
-    automatic_check = strtobool(config['AutomaticCheck'])
+    automatic_check = str2bool(config['AutomaticCheck'])
     if automatic_check:
         checker.run_in_background()
     uvicorn.run(app, host=config['Host'], port=int(config['Port']))

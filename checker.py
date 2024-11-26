@@ -7,7 +7,7 @@ from config import Configuration
 from notifier import Notifier
 from errors import Errors
 from multiprocessing import Pool
-from distutils.util import strtobool
+from str2bool import str2bool
 from datetime import datetime
 
 class Checker():
@@ -66,7 +66,7 @@ class Checker():
         overtime = 0
         last_send_time = datetime.now()
         was_any_error = False
-        send_email = strtobool(config['SendEmail'])
+        send_email = str2bool(config['SendEmail'])
         temporary_disabled_email = False
         default_overtime = int(config['Overtime'])
         
