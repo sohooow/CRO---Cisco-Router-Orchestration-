@@ -16,7 +16,7 @@
             <script type="javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     </head>
 
-    <body id="body" onload="getLastErrors()">
+    <body id="body" onload="">
         <nav role="navigation" class="navbar">
             <div class="nav-wrapper container">
                 <a href="#" class="brand-logo" style="font-family: Assistant, sans-serif;">OrchestrationCISCO</a>
@@ -27,14 +27,12 @@
             </div>
         </nav>
         <div class="center-align">
-            <p>La barre de chargement pourra être réutilisée plus tard</p>
-        </div>
-        <div id="loader" class="progress">
-            <div class="indeterminate"></div>
-        </div>
         <div id="content" class="container">
             <div class="center-align">
-                <p>Contenu de la page</p>
+                <div class="input-group">
+                    <input type="search" class="form-control rounded" placeholder="Enter commands here" aria-label="" aria-describedby="search-addon" />
+                    <button type="button" class="btn btn-outline-primary" data-mdb-ripple-init>Send</button>
+                </div>
             </div>
         </div>
     </body>
