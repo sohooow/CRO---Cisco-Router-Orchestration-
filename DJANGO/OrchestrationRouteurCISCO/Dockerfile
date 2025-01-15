@@ -45,4 +45,4 @@ USER appuser
 EXPOSE 8000
 
 # Commande de démarrage
-CMD ["python3", "manage.py", "runserver", "127.0.0.1:8000"]
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:8001"]
