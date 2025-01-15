@@ -77,13 +77,13 @@ WSGI_APPLICATION = 'OrchestrationRouteurCISCO.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('MYSQL_DATABASE', 'mydatabase'),
-        'USER': os.getenv('MYSQL_USER', 'user'),
-        'PASSWORD': os.getenv('MYSQL_PASSWORD', 'password'),
-        'HOST': os.getenv('DB_HOST', 'db'),  # Le nom du service Docker pour MySQL
-        'PORT': '3306',
-        'OPTIONS': {'charset': 'utf8mb4',}
+        # 'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': os.getenv('MYSQL_DATABASE', 'mydatabase'),
+        # 'USER': os.getenv('MYSQL_USER', 'user'),
+        # 'PASSWORD': os.getenv('MYSQL_PASSWORD', 'password'),
+        # 'HOST': os.getenv('DB_HOST', 'db'),  # Le nom du service Docker pour MySQL
+        # 'PORT': '3306',
+        # 'OPTIONS': {'charset': 'utf8mb4',}
     }
 }
 
