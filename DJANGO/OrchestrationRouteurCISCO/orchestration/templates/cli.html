@@ -25,7 +25,7 @@
             border-radius: 10px 10px 0 0;
         }
 
-        .cli-container {
+        .command-container {
             max-width: 800px;
             margin: 30px auto;
             background-color: #ffffff;
@@ -34,7 +34,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .cli-output {
+        .cli-output, .netconf-output {
             background-color: #000000;
             color: #2bf44d;
             padding: 15px;
@@ -44,16 +44,25 @@
             margin-top: 20px;
         }
 
+        .btn-mode-cli {
+            background-color: #2e0fe1;
+            color: white;
+            margin : 5px 0;
+        }
+
+        .btn-mode-netconf {
+            background-color: #036f23;
+            color: white;
+            margin : 5px 0;
+        }
+
         .btn-execute {
             background-color: #1C6CC8;
             color: white;
+            margin : 5px 0;
         }
 
-        .btn-execute:hover {
-            background-color: #004a8b;
-        }
-
-        .cli-error {
+        .cli-error, .netconf-error {
             background-color: #f8d7da;
             color: #721c24;
             padding: 10px;
@@ -70,26 +79,124 @@
         <h1>Orchestration d'un routeur Cisco</h1>
     </div>
 
-    <!-- CLI Configuration Section -->
-    <div class="cli-container">
-        <h2 class="text-center mb-4">Configuration via CLI (Command Line Interface)</h2>
+    <!-- Container principal -->
+    <div class="command-container">
+        <h3 class="text-center mb-4">Gestion des interfaces</h3>
 
-        <!-- Command Input -->
-        <label for="command" class="form-label">Entrez une commande CLI :</label>
-        <div class="input-group">
-            <input type="text" id="command" class="form-control" placeholder="Exemple : show ip interface brief" aria-label="Commande CLI">
-            <button id="executeBtn" class="btn btn-execute">Exécuter</button>
+        <!-- Mode Selection -->
+        <div class="text-center mb-4">
+            <button id="cliModeBtn" class="btn btn-primary btn-mode">Mode CLI</button>
+            <button id="netconfModeBtn" class="btn btn-success btn-mode">Mode NETCONF</button>
+        </div>
+               
+
+        <!--CLI Section-->
+        <div id="cliSection" class="command-container" style="display: none;">
+            <h4>Gestion en mode CLI</h4>
+            <form id="cliForm">
+                <div class="mb-3">
+                    <label for="cliCommand" class="form-label">Nom de l'interface</label>
+                    <input type="text" id="cliCommand" class="form-control" placeholder="Exemple : GigabitEthernet0/1" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ipAddress" class="form-label">Adresse IP</label>
+                    <input type="text" id="ipAdress" class="form-control" placeholder="Exemple : 192.168.12.1" >
+                </div>
+                <div class="mb-3">
+                    <label for="SubnetMask" class="form-label">Masque de sous-réseau</label>
+                    <input type="text" id="SubnetMask" class="form-control" placeholder="Exemple : 255.255.255.252" >
+                </div>
+                <div class="mb-3">
+                    <label for="SubInterface" class="form-label">Sous-interface</label>
+                    <input type="text" id="SubInterface" class="form-control" placeholder="Exemple : .2" >
+                </div>
+
+                <div class="mb-3">
+                    <label for="cliAction" class="form-label">Action</label>
+                    <select id="cliAction" class="form-select">
+                        <option value="Ajout">Ajouter</option>
+                        <option value="Modification">Modifier</option>
+                        <option value="Suppression">Supprimer</option>
+                    </select>
+            </div>
+            <button type="button" id="cliExecuteBtn" class="btn btn-primary">Exécuter</button>
+            </form>
+            <div class="cli-output" id="cliOutput">
+                <p>Les résultats de la commande s'afficheront ici...</p>
+            </div>
         </div>
 
-        <!-- Output Section -->
-        <div class="cli-output" id="cliOutput">
-            <p>Les résultats de la commande s'afficheront ici...</p>
-        </div>
-
-        <!-- Error Section -->
-        <div id="cliError" class="cli-error" style="display: none;">
-            <h5>Erreur :</h5>
-            <p id="errorText"></p>
+        <!-- NETCONF Section -->
+        <div id="netconfSection" class="command-container" style="display: none;">
+            <h4>Gestion en mode NETCONF</h4>
+            <form id="netconfForm">
+                <div class="mb-3">
+                    <label for="interfaceName" class="form-label">Nom de l'interface</label>
+                    <input type="text" id="interfaceName" class="form-control" placeholder="Exemple : GigabitEthernet0/1" required>
+                    <ul id="suggestionsList" class="list-group" style="display: none; position: absolute; max-height: 150px; overflow-y: auto; z-index: 1000;"></ul>
+                </div>
+                <div class="mb-3">
+                    <label for="ipAddress" class="form-label">Adresse IP</label>
+                    <input type="text" id="ipAdress" class="form-control" placeholder="Exemple : 192.168.12.1" >
+                </div>
+                <div class="mb-3">
+                    <label for="SubnetMask" class="form-label">Masque de sous-réseau</label>
+                    <input type="text" id="SubnetMask" class="form-control" placeholder="Exemple : 255.255.255.252" >
+                </div>
+                <div class="mb-3">
+                    <label for="SubInterface" class="form-label">Sous-interface</label>
+                    <input type="text" id="SubInterface" class="form-control" placeholder="Exemple : .2" >
+                </div>
+                <div class="mb-3">
+                    <label for="netconfAction" class="form-label">Action</label>
+                    <select id="netconfAction" class="form-select">
+                        <option value="Ajout">Ajouter</option>
+                        <option value="Modification">Modifier</option>
+                        <option value="Supression">Supprimer</option>
+                    </select>
+                </div>
+                <button type="button" id="netconfExecuteBtn" class="btn btn-success">Exécuter</button>
+            </form>
+            <div class="netconf-output" id="netconfOutput">
+                <p>Les résultats de la commande s'afficheront ici...</p>
+            </div>
         </div>
     </div>
-    
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const interfaces = ['GigabitEthernet0/1', 'GigabitEthernet0/2', 'GigabitEthernet1/1', 'BundleEther0/1', 'BundleEther1/1', 'HundredGigE0/0/0', 'HundredGigE1/1/1', 'FastEthernet0/1', 'FastEthernet1/1'];
+        const interfaceNameField = document.getElementById('interfaceName');
+
+        //<!-- Finir de coder le menu déroulant filtré en fonction de la saisie du user -->
+    //<!-- Basculement dynamique du mode -->
+
+        document.getElementById('cliModeBtn').addEventListener('click', function() {
+            document.getElementById('cliSection').style.display = 'block';
+            document.getElementById('netconfSection').style.display = 'none';
+        });
+
+        document.getElementById('netconfModeBtn').addEventListener('click', function() {
+            document.getElementById('cliSection').style.display = 'none';
+            document.getElementById('netconfSection').style.display = 'block';
+        });
+
+        // Exécution de la partie CLI
+        document.getElementById('cliExecuteBtn').addEventListener('click', function() {
+            const command = document.getElementById('cliCommand').value;
+            const action = document.getElementById('cliAction').value;
+            const output = `Commande exécutée : ${command} (${action})`;
+            document.getElementById('cliOutput').textContent = output;
+        });
+
+        // Exécution de la partie NETCONF
+        document.getElementById('netconfExecuteBtn').addEventListener('click', function() {
+            const interfaceName = document.getElementById('interfaceName').value;
+            const action = document.getElementById('netconfAction').value;
+            const output = `Action ${action} exécutée sur l'interface ${interfaceName}`;
+            document.getElementById('netconfOutput').textContent = output;
+        });
+    </script>
+</body>
+</html>
