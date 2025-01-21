@@ -5,16 +5,16 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
 
-  db:
-    image: mysql:8.0
-    container_name: mysql_db  # Nom explicite pour le conteneur MySQL
-    environment:
-      MYSQL_DATABASE: mydatabase
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_ROOT_PASSWORD: rootpassword
-    ports:
-      - "3306:3306"
+  # db:
+  #   image: mysql:8.0
+  #   container_name: mysql_db  # Nom explicite pour le conteneur MySQL
+  #   environment:
+  #     MYSQL_DATABASE: mydatabase
+  #     MYSQL_USER: user
+  #     MYSQL_PASSWORD: password
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #   ports:
+  #     - "3306:3306"

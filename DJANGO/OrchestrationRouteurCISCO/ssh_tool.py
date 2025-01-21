@@ -1,5 +1,7 @@
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
+from django.contrib.auth.decorators import permission_required
+
 
 def ssh_configure_netmiko(host, username, password, enable, config_commands, command):
     """
@@ -36,12 +38,12 @@ def ssh_configure_netmiko(host, username, password, enable, config_commands, com
             delay_factor = 2,
         )
         
-        output = connection.send_command(command)
-
+        output = connection.send_command(command, use_textfsm=True)
 
         # Déconnexion propre
         connection.disconnect()
-        
+
+
         return output
     
     except NetMikoAuthenticationException:
@@ -51,25 +53,36 @@ def ssh_configure_netmiko(host, username, password, enable, config_commands, com
     except Exception as e:
         return f"Erreur inattendue : {str(e)}"
 
-if __name__ == "__main__":
-    # Informations pour la connexion
+def exec():
     host = "172.16.10.11"
     username = "admin"
     password = "c79e97SGVg7dc"
     enable = "Admin123INT"
-    interface_name = "GigabitEthernet1"
+    interface_name = ""
     command = "show ip interface brief"  # Exemple de commande Cisco à exécuter
     config_commands = [
-        f"interface {interface_name}",
-        "shutdown"
+        f"",
+        ""
     ]
-    
-    # Connexion et exécution de la commande
-    output = ssh_configure_netmiko(host, username, password, enable, config_commands, command)
-    if output:
-        print("Sortie des commandes de configuration")
-        print(output)
+    try:
+        # Connexion et exécution de la commande
+        output = ssh_configure_netmiko(host, username, password, enable, config_commands, command)
+        print("Output de la commande SSH:", output)  # Affiche la sortie de la commande
+
+        if isinstance(output, list):
+            for interface in output:
+                print(interface)  # Affiche chaque dictionnaire                
+                print(f"Interface: {interface.get('interface', 'N/A')} | IP: {interface.get('ip_address', 'N/A')} | Status: {interface.get('status', 'N/A')} | Protocol: {interface.get('proto', 'N/A')}")
+        else:
+            print(f"Erreur lors de l'exécution de la commande : {output}")  # Affiche l'erreur si ce n'est pas une liste
+        return output
+    except Exception as e:
+        print(f"Erreur dans exec: {str(e)}")  # Capture l'exception et l'affiche
+        return {"error": f"Erreur dans exec: {str(e)}"}
 
 
 
+@permission_required('app.view_model', raise_exception=True)
+def modifier_config(request):
+    print("")
 #le hostname par défaut est pod1-cat9kv

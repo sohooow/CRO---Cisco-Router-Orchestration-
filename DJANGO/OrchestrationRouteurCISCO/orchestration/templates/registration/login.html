@@ -39,11 +39,23 @@
     </div>
 
     <div class="auth-container">
-        <h4 class = "text-center mb-4">Choisissez un mode de configuration</h4>
-        <div class="d-grid gap-2">
-            <a href="{% url 'config' %}" class="btn btn-outline-primary btn-mode">Authentification</a>
-        </div>
-    </div>
+        <h3 class = "text-center mb-4">Authentifiez-vous</h3>
+        <form action="dashboard.html" method="post">
+            <form action="choice.html" method="get">
+            <!-- <div class="mb-3">
+                <label for="username" class="form-label">Nom d'utilisateur</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Entrez votre nom d'utilisateur" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Entrez votre mot de passe" required>
+            </div> -->
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+            </form>
+        </form>
 
 
     <!-- Bootstrap JS (Optional) -->

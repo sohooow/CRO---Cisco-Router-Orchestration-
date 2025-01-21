@@ -50,7 +50,11 @@
                 <label for="password" class="form-label">Mot de passe</label>
                 <input type="password" id="password" name="password" class="form-control" placeholder="Entrez votre mot de passe" required>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+            </form>
         </form>
 
 

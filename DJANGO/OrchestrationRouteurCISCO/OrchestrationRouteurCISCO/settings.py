@@ -56,7 +56,7 @@ ROOT_URLCONF = 'OrchestrationRouteurCISCO.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates/"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -123,10 +123,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]  # Optionnel, si vous avez un dossier global de fichiers statiques
-STATIC_ROOT = BASE_DIR / "staticfiles"    # Où collecter les fichiers statiques en production
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'orchestration/static'),  # Spécifie où se trouvent les fichiers statiques
+]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # Dossier pour collecter les fichiers statiques lors de la collecte
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#AUTH_USER_MODEL = 'orchestration.CustomUser'
+LOGIN_REDIRECT_URL = '/config'  # Page d'accueil ou page spécifique
+LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
+LOGIN_URL = '/login/'            # URL de la page de connexion
+LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
