@@ -16,8 +16,8 @@ import ssh_tool
 
 
 class MyLoginView(LoginView):
-    template_name = 'resgistration/login.html'  # Chemin vers votre template personnalisé
-    redirect_authenticated_user = True  # Redirige si l'utilisateur est déjà connecté
+    template_name = 'resgistration/login.html'
+    redirect_authenticated_user = True
 
 
 def auth(request):

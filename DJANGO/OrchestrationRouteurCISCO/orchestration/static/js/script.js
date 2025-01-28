@@ -2,37 +2,59 @@ const interfaces = ['GigabitEthernet0/1', 'GigabitEthernet0/2', 'GigabitEthernet
 const interfaceNameField = document.getElementById('interfaceName');
 
 //<!-- Finir de coder le menu déroulant filtré en fonction de la saisie du user -->
-//<!-- Basculement dynamique du mode -->
 
-document.getElementById('cliModeBtn').addEventListener('click', function() {
-    document.getElementById('cliSection').style.display = 'block';
-    document.getElementById('netconfSection').style.display = 'none';
-});
+//Envoi de la data au back-end
+document.getElementById('executeBtn').addEventListener('click', sendJsonData()); 
 
-document.getElementById('netconfModeBtn').addEventListener('click', function() {
-    document.getElementById('cliSection').style.display = 'none';
-    document.getElementById('netconfSection').style.display = 'block';
-});
+function sendJsonData(){
 
-// Exécution de la partie CLI
-document.getElementById('cliExecuteBtn').addEventListener('click', function() {
-    const command = document.getElementById('cliCommand').value;
-    const action = document.getElementById('cliAction').value;
+    // Send JSON data to the backend
+    fetch('http://localhost:8000/orchestration/config/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(getData())
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Response from server:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function printOutput() {
+
     const output = `Commande exécutée : ${command} (${action})`;
     document.getElementById('cliOutput').textContent = output;
-});
 
-// Exécution de la partie NETCONF
-document.getElementById('netconfExecuteBtn').addEventListener('click', function() {
+}
+
+//Récupérer la data
+function getData() {
+ 
     const interfaceName = document.getElementById('interfaceName').value;
-    const action = document.getElementById('netconfAction').value;
-    const output = `Action ${action} exécutée sur l'interface ${interfaceName}`;
-    document.getElementById('netconfOutput').textContent = output;
-});
+    const ipAddress = document.getElementById('ipAddress').value;
+    const subnetMask = document.getElementById('SubnetMask').value;
+    const subInterface = document.getElementById('SubInterface').value;
+    const action = document.getElementById('Action').value;
 
+    
+    const JsonData = {
+        interfaceName: interfaceName,
+        ipAddress: ipAddress,
+        subnetMask: subnetMask,
+        subInterface: subInterface,
+        action: action,
+    };
 
+    return JsonData;
 
-// Fonction pour récupérer les données dynamiques
+}
+
+// Fonction pour récupérer les interfaces dynamiquement
 function loadDynamicData() {
 // Effectuer une requête AJAX pour obtenir les données
 fetch('/orchestration/dynamic-output/')
@@ -73,7 +95,7 @@ fetch('/orchestration/dynamic-output/')
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.setAttribute('colspan', '4');
-            cell.textContent = 'Aucune donnée disponible';
+            cell.textContent = 'Aucune donnée disponible (vérifiiez le VPN)';
             row.appendChild(cell);
             tbody.appendChild(row);
         }
@@ -83,6 +105,5 @@ fetch('/orchestration/dynamic-output/')
     });
 }
 
-
 // Charger les données dynamiques lorsque la page est prête
-document.addEventListener('DOMContentLoaded', loadDynamicData);
+document.addEventListener('DOMContentLoaded', loadDynamicData());
