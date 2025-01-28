@@ -106,4 +106,4 @@ fetch('/orchestration/dynamic-output/')
 }
 
 // Charger les données dynamiques lorsque la page est prête
-document.addEventListener('DOMContentLoaded', loadDynamicData());
+document.addEventListener('DOMContentLoaded', loadDynamicData);
