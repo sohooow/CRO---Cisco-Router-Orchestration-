@@ -13,5 +13,6 @@ urlpatterns = [
     path("config/", views.config, name="config"),
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
+    path('manage-interface/', views.manage_interface, name='manage_interface'),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
