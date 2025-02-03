@@ -1,9 +1,19 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 
 # Modèle Utilisateur avec authentification
 class User(AbstractUser):
     """Modèle utilisateur pour l'identification."""
+    groups = models.ManyToManyField(
+        Group,
+        related_name="orchestration_users",  # Custom related name
+        blank=True
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name="orchestration_user_permissions",  # Custom related name
+        blank=True
+    )
     def __str__(self):
         return self.username
 
