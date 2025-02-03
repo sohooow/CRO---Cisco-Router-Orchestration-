@@ -3,16 +3,13 @@ from django.http import HttpResponse, JsonResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-<<<<<<< Updated upstream
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .netconf_client import NetconfClient  # le script NETCONF
 
 import ipaddress
-=======
 from django.views import View
 import json
->>>>>>> Stashed changes
 import sys
 import os
 
@@ -64,7 +61,6 @@ def get_dynamic_output(request):
     except Exception as e:
         # Capture l'exception et renvoie les détails
         return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
-<<<<<<< Updated upstream
     
 
 # API NETCONF - Création, modification, suppression d'une interface
@@ -109,7 +105,6 @@ def manage_interface(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
-=======
 
 
 class ConfigAPIView(View):
@@ -137,4 +132,3 @@ class ConfigAPIView(View):
         }
         
         return JsonResponse(response_data)  # Retourne un JSON au frontend
->>>>>>> Stashed changes
