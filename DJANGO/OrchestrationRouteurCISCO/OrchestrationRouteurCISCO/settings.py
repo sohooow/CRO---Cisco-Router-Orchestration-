@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -49,6 +50,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+
 ]
 
 ROOT_URLCONF = 'OrchestrationRouteurCISCO.urls'
@@ -139,3 +142,5 @@ LOGIN_REDIRECT_URL = '/config'  # Page d'accueil ou page spécifique
 LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
 LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
+
+CORS_ALLOW_ALL_ORIGINS = True

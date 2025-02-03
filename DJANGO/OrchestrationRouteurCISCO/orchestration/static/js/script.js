@@ -4,25 +4,25 @@ const interfaceNameField = document.getElementById('interfaceName');
 //<!-- Finir de coder le menu déroulant filtré en fonction de la saisie du user -->
 
 //Envoi de la data au back-end
-document.getElementById('executeBtn').addEventListener('click', sendJsonData()); 
+document.getElementById('executeBtn').addEventListener('click', sendJsonData); 
 
 function sendJsonData(){
+
+    console.log(getData());
+
+    // Récupérer le token CSRF depuis les cookies
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)[1];
 
     // Send JSON data to the backend
     fetch('http://localhost:8000/orchestration/config/', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,  // Ajouter le token CSRF dans l'en-tête
+
         },
         body: JSON.stringify(getData())
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Response from server:', data);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
 }
 
 function printOutput() {
@@ -49,6 +49,11 @@ function getData() {
         subInterface: subInterface,
         action: action,
     };
+
+    if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action) {
+        console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action });
+    }
+    
 
     return JsonData;
 

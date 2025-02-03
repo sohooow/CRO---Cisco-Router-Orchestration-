@@ -3,13 +3,23 @@ from django.http import HttpResponse, JsonResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
+<<<<<<< Updated upstream
 from django.views.decorators.csrf import csrf_exempt
 import json
 from .netconf_client import NetconfClient  # le script NETCONF
 
 import ipaddress
+=======
+from django.views import View
+import json
+>>>>>>> Stashed changes
 import sys
 import os
+
+import logging
+
+# Créez un logger
+logger = logging.getLogger(__name__)
 
 # Ajouter le répertoire parent de 'orchestration' au sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -54,6 +64,7 @@ def get_dynamic_output(request):
     except Exception as e:
         # Capture l'exception et renvoie les détails
         return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
+<<<<<<< Updated upstream
     
 
 # API NETCONF - Création, modification, suppression d'une interface
@@ -98,3 +109,32 @@ def manage_interface(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
+=======
+
+
+class ConfigAPIView(View):
+    def post(self, request, *args, **kwargs):
+
+        # Récupérer les données JSON envoyées dans le body de la requête
+        try:
+            data = json.loads(request.body)  # Utilise json.loads pour parser la requête JSON
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        
+        # Extraire les données
+        interface_name = data.get('interfaceName', None)
+        ip_address = data.get('ipAddress', None)
+        subnet_mask = data.get('subnetMask', None)
+        sub_interface = data.get('subInterface', None)
+        action = data.get('action', None)
+        
+        # Effectuer des traitements sur les données (par exemple, une configuration réseau)
+        
+        # Vous pouvez envoyer une réponse au client ici
+        response_data = {
+            'status': 'success',
+            'message': 'Configuration traitée avec succès!'
+        }
+        
+        return JsonResponse(response_data)  # Retourne un JSON au frontend
+>>>>>>> Stashed changes
