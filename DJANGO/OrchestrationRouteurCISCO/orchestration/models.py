@@ -1,10 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# Create your models here.
+# Modèle Utilisateur avec authentification
+class User(AbstractUser):
+    """Modèle utilisateur pour l'identification."""
+    def __str__(self):
+        return self.username
 
-    
-# class CustomUser(AbstractUser):
-#     # Ajoutez des champs supplémentaires ici
-#     phone_number = models.CharField(max_length=15, blank=True, null=True)
-#     birthdate = models.DateField(blank=True, null=True)
+# Modèle Routeur et Interfaces
+class Router(models.Model):
+    """Table pour stocker les interfaces configurées sur les routeurs."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Associer un routeur à un utilisateur
+    interface_name = models.CharField(max_length=50, unique=True)  # Nom de l'interface
+    ip_address = models.GenericIPAddressField()  # Adresse IP de l'interface
+    subnet_mask = models.CharField(max_length=15)  # Masque de sous-réseau
+    sub_interface = models.CharField(max_length=50, null=True, blank=True)  # Nom de la sous-interface (optionnel)
+
+    def __str__(self):
+        return f"{self.interface_name} - {self.ip_address}"
