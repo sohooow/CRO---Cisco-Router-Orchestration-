@@ -1,33 +1,32 @@
 from ncclient import manager
 from ncclient.xml_ import to_ele
 
+
 class NetconfClient:
     """Client NETCONF pour gérer les interfaces d'un routeur Cisco IOS-XE."""
     
-    def __init__(self, host, username, password, port=830):
-        self.host = host
-        self.username = username
-        self.password = password
-        self.port = port
+    def __init__(self):
+        self.host = "172.16.10.11"
+        self.username = "admin"
+        self.password = "c79e97SGVg7dc"
         self.mgr = None  
 
     def connect(self):
         """Établit la connexion NETCONF."""
         try:
             self.mgr = manager.connect(
-                host=self.host,
-                port=self.port,
-                username=self.username,
-                password=self.password,
+                host="172.16.10.11",
+                username="admin",
+                password="c79e97SGVg7dc",
                 hostkey_verify=False,
                 device_params={'name': 'iosxe'},
                 allow_agent=False,
                 look_for_keys=False
             )
-            print("[✅] Connexion NETCONF établie avec", self.host)
+            print("Connexion NETCONF établie avec", self.host)
             return self.mgr
         except Exception as e:
-            print(f"[❌] Erreur de connexion NETCONF: {e}")
+            print(f"Erreur de connexion NETCONF: {e}")
             return None
 
     def send_rpc(self, xml_rpc):
@@ -37,7 +36,7 @@ class NetconfClient:
             response = self.mgr.dispatch(rpc_element)
             return response.xml
         except Exception as e:
-            print(f"[❌] Erreur lors de l'envoi RPC: {e}")
+            print(f"Erreur lors de l'envoi RPC: {e}")
             return None
 
     # ======= 📌 GESTION DES INTERFACES ======= #
@@ -93,3 +92,21 @@ class NetconfClient:
         </rpc>
         """
         return self.send_rpc(rpc)
+    
+if __name__ == "__main__":
+    # Créez une instance de NetconfClient avec les paramètres appropriés
+    client = NetconfClient()
+
+    # Établir la connexion NETCONF
+    if client.connect():
+        # Appeler la méthode create_or_update_interface
+        response = client.create_or_update_interface(
+            interface_name="GigabitEthernet5",
+            ip="172.16.10.11",
+            mask="255.255.255.0",
+            operation="merge"
+        )
+        print("Réponse RPC:", response)
+    else:
+        print("La connexion NETCONF a échoué.")
+

@@ -12,6 +12,16 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import socket
+
+# Vérifiez si AF_UNIX est disponible
+if hasattr(socket, 'AF_UNIX'):
+    # Code spécifique aux sockets Unix
+    pass
+else:
+    # Code alternatif pour les systèmes qui ne supportent pas AF_UNIX
+    pass
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
