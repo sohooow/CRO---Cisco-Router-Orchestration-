@@ -1,46 +1,38 @@
 const interfaces = ['GigabitEthernet0/1', 'GigabitEthernet0/2', 'GigabitEthernet1/1', 'BundleEther0/1', 'BundleEther1/1', 'HundredGigE0/0/0', 'HundredGigE1/1/1', 'FastEthernet0/1', 'FastEthernet1/1'];
 const interfaceNameField = document.getElementById('interfaceName');
 
-//<!-- Finir de coder le menu déroulant filtré en fonction de la saisie du user -->
-
-//Envoi de la data au back-end
+// Envoi de la data au back-end
 document.getElementById('executeBtn').addEventListener('click', sendJsonData); 
 
 function sendJsonData(){
-
     console.log(getData());
-
+    
     // Récupérer le token CSRF depuis les cookies
     const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)[1];
-
+    
     // Send JSON data to the backend
     fetch('http://localhost:8000/orchestration/config/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken,  // Ajouter le token CSRF dans l'en-tête
-
         },
         body: JSON.stringify(getData())
     })
 }
 
 function printOutput() {
-
     const output = `Commande exécutée : ${command} (${action})`;
     document.getElementById('cliOutput').textContent = output;
-
 }
 
-//Récupérer la data
+// Récupérer la data
 function getData() {
- 
     const interfaceName = document.getElementById('interfaceName').value;
     const ipAddress = document.getElementById('ipAddress').value;
     const subnetMask = document.getElementById('SubnetMask').value;
     const subInterface = document.getElementById('SubInterface').value;
     const action = document.getElementById('Action').value;
-
     
     const JsonData = {
         interfaceName: interfaceName,
@@ -49,66 +41,89 @@ function getData() {
         subInterface: subInterface,
         action: action,
     };
-
+    
     if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action) {
         console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action });
     }
     
-
     return JsonData;
-
 }
 
 // Fonction pour récupérer les interfaces dynamiquement
 function loadDynamicData() {
-// Effectuer une requête AJAX pour obtenir les données
-fetch('/orchestration/dynamic-output/')
+    
+    // Trouver le corps du tableau
+    const tbody = document.querySelector('#interfaceTable tbody');
+    
+    tbody.innerHTML = '';
+
+    // Afficher le spinner de chargement (remplacer le contenu par le spinner)
+    const loadingRow = document.getElementById('loadingRow');
+    loadingRow.style.display = 'table-row'; // Afficher le spinner
+    
+    
+    
+    // Effectuer une requête AJAX pour obtenir les données
+    fetch('/orchestration/dynamic-output/')
     .then(response => response.json())  // Convertir la réponse en JSON
     .then(data => {
-        // Si l'API renvoie un champ "data"
-        if (data && data.data) {
-            // Trouver le corps du tableau
-            const tbody = document.querySelector('#interfaceTable tbody');
-
-            // Parcourir les données et ajouter des lignes au tableau
+        // Masquer le spinner une fois les données chargées
+        loadingRow.style.display = 'none';
+        
+        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+            // Si les données sont présentes et sous forme de tableau non vide
             data.data.forEach(interface => {
-                const row = document.createElement('tr');  // Créer une nouvelle ligne
-
-                // Créer et ajouter les cellules (td) pour chaque champ
+                const row = document.createElement('tr');
+                
+                // Création des cellules
                 const cell1 = document.createElement('td');
                 cell1.textContent = interface.interface || 'N/A';
                 row.appendChild(cell1);
-
+                
                 const cell2 = document.createElement('td');
                 cell2.textContent = interface.ip_address || 'N/A';
                 row.appendChild(cell2);
-
+                
                 const cell3 = document.createElement('td');
                 cell3.textContent = interface.status || 'N/A';
                 row.appendChild(cell3);
-
+                
                 const cell4 = document.createElement('td');
                 cell4.textContent = interface.proto || 'N/A';
                 row.appendChild(cell4);
-
+                
                 // Ajouter la ligne au tableau
                 tbody.appendChild(row);
             });
         } else {
             // Si aucune donnée n'est disponible, afficher un message
-            const tbody = document.querySelector('#interfaceTable tbody');
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.setAttribute('colspan', '4');
-            cell.textContent = 'Aucune donnée disponible (vérifiiez le VPN)';
+            cell.textContent = 'Aucune donnée disponible (vérifiez le VPN ou la connexion internet)';
             row.appendChild(cell);
             tbody.appendChild(row);
         }
     })
     .catch(error => {
         console.error('Erreur lors de la récupération des données:', error);
+        
+        // Masquer le spinner en cas d'erreur
+        loadingRow.style.display = 'none';
+        
+        // En cas d'erreur réseau, afficher un message d'erreur
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+        cell.setAttribute('colspan', '4');
+        cell.textContent = 'Erreur lors de la récupération des données. Veuillez réessayer.';
+        row.appendChild(cell);
+        tbody.appendChild(row);
     });
 }
 
+// Associer la fonction au bouton "Rafraîchir"
+document.getElementById('refresh').addEventListener('click', loadDynamicData);
+
 // Charger les données dynamiques lorsque la page est prête
 document.addEventListener('DOMContentLoaded', loadDynamicData);
+

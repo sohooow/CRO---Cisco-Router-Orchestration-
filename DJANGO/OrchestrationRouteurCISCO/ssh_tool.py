@@ -1,6 +1,5 @@
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
-from django.contrib.auth.decorators import permission_required
 
 
 def ssh_configure_netmiko(host, username, password, enable, config_commands, command):
@@ -54,7 +53,7 @@ def ssh_configure_netmiko(host, username, password, enable, config_commands, com
         return f"Erreur inattendue : {str(e)}"
 
 def exec():
-    host = "172.16.10.11"
+    host = "172.16.10.11"                   #importer la data depuis la bdd
     username = "admin"
     password = "c79e97SGVg7dc"
     enable = "Admin123INT"
@@ -62,7 +61,6 @@ def exec():
     command = "show ip interface brief"  # Exemple de commande Cisco à exécuter
     config_commands = [
         f"",
-        ""
     ]
     try:
         # Connexion et exécution de la commande
@@ -80,9 +78,10 @@ def exec():
         print(f"Erreur dans exec: {str(e)}")  # Capture l'exception et l'affiche
         return {"error": f"Erreur dans exec: {str(e)}"}
 
+if __name__ == "__main__":
+    output = exec()
+    print("\n===== Résultat de la commande =====\n")
+    print(output)
 
 
-@permission_required('app.view_model', raise_exception=True)
-def modifier_config(request):
-    print("")
 #le hostname par défaut est pod1-cat9kv
