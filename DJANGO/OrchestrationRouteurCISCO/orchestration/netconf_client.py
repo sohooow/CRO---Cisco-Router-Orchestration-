@@ -1,23 +1,25 @@
+import os
+from dotenv import load_dotenv
 from ncclient import manager
 from ncclient.xml_ import to_ele
 
-
 class NetconfClient:
-    """Client NETCONF pour gérer les interfaces d'un routeur Cisco IOS-XE."""
+    """Client NETCONF sécurisé pour gérer les interfaces d'un routeur Cisco IOS-XE."""
     
     def __init__(self):
-        self.host = "172.16.10.11"
-        self.username = "admin"
-        self.password = "c79e97SGVg7dc"
+        load_dotenv()
+        self.host = os.getenv("NETCONF_HOST")
+        self.username = os.getenv("NETCONF_USER")
+        self.password = os.getenv("NETCONF_PASS")
         self.mgr = None  
 
     def connect(self):
         """Établit la connexion NETCONF."""
         try:
             self.mgr = manager.connect(
-                host="172.16.10.11",
-                username="admin",
-                password="c79e97SGVg7dc",
+                host=self.host,
+                username=self.username,
+                password=self.password,
                 hostkey_verify=False,
                 device_params={'name': 'iosxe'},
                 allow_agent=False,
@@ -29,84 +31,46 @@ class NetconfClient:
             print(f"Erreur de connexion NETCONF: {e}")
             return None
 
-    def send_rpc(self, xml_rpc):
-        """Envoie une requête XML NETCONF."""
+    def disconnect(self):
+        """Ferme la connexion NETCONF."""
+        if self.mgr:
+            self.mgr.close_session()
+            print("Connexion NETCONF fermée.")
+    
+    def load_rpc(self, file_path, **kwargs):
+        """Charge une requête XML depuis un fichier et remplace les valeurs dynamiques."""
         try:
-            rpc_element = to_ele(xml_rpc)
-            response = self.mgr.dispatch(rpc_element)
-            return response.xml
+            with open(file_path, "r") as file:
+                rpc = file.read()
+            return rpc.format(**kwargs)
         except Exception as e:
-            print(f"Erreur lors de l'envoi RPC: {e}")
+            print(f"Erreur lors du chargement du fichier RPC: {e}")
             return None
 
-    # ======= 📌 GESTION DES INTERFACES ======= #
+    def send_rpc(self, file_path, **kwargs):
+        """Envoie une requête NETCONF chargée depuis un fichier."""
+        rpc = self.load_rpc(file_path, **kwargs)
+        if rpc:
+            try:
+                rpc_element = to_ele(rpc)
+                response = self.mgr.dispatch(rpc_element)
+                return response.xml
+            except Exception as e:
+                print(f"Erreur lors de l'envoi RPC: {e}")
+        return None
 
     def create_or_update_interface(self, interface_name, ip, mask, operation="merge"):
-        """Crée ou modifie une interface avec une adresse IP."""
-        rpc = f"""
-        <rpc message-id="102" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-          <edit-config>
-            <target>
-              <running/>
-            </target>
-            <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
-              <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-                <interface>
-                  <GigabitEthernet xc:operation="{operation}">
-                    <name>{interface_name}</name>
-                    <ip>
-                      <address>
-                        <primary>
-                          <address>{ip}</address>
-                          <mask>{mask}</mask>
-                        </primary>
-                      </address>
-                    </ip>
-                  </GigabitEthernet>
-                </interface>
-              </native>
-            </config>
-          </edit-config>
-        </rpc>
-        """
-        return self.send_rpc(rpc)
+        """Crée ou met à jour une interface avec une adresse IP."""
+        return self.send_rpc("create_update_interface.xml", interface_name=interface_name, ip=ip, mask=mask, operation=operation)
 
     def delete_interface(self, interface_name):
         """Supprime une interface."""
-        rpc = f"""
-        <rpc message-id="103" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-          <edit-config>
-            <target>
-              <running/>
-            </target>
-            <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
-              <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-                <interface>
-                  <GigabitEthernet xc:operation="delete">
-                    <name>{interface_name}</name>
-                  </GigabitEthernet>
-                </interface>
-              </native>
-            </config>
-          </edit-config>
-        </rpc>
-        """
-        return self.send_rpc(rpc)
+        return self.send_rpc("delete_interface.xml", interface_name=interface_name)
     
 if __name__ == "__main__":
-    # Créez une instance de NetconfClient avec les paramètres appropriés
     client = NetconfClient()
-
-    # Établir la connexion NETCONF
+    
     if client.connect():
-        # Appeler la méthode create_or_update_interface
-        response = client.create_or_update_interface(
-            interface_name="GigabitEthernet5",
-            ip="172.16.10.11",
-            mask="255.255.255.0",
-            operation="merge"
-        )
+        response = client.create_or_update_interface("GigabitEthernet5", "172.16.10.11", "255.255.255.0", "merge")
         print("Réponse RPC:", response)
-    else:
-        print("La connexion NETCONF a échoué.")
-
+        client.disconnect()

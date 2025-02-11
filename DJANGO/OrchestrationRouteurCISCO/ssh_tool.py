@@ -58,7 +58,7 @@ def exec():
     password = "c79e97SGVg7dc"
     enable = "Admin123INT"
     interface_name = ""
-    command = "show ip interface brief"  # Exemple de commande Cisco à exécuter
+    command = "telnet" # Exemple de commande Cisco à exécuter
     config_commands = [
         f"",
     ]

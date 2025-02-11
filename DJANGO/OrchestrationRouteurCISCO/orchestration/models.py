@@ -6,12 +6,12 @@ class User(AbstractUser):
     """Modèle utilisateur pour l'identification."""
     groups = models.ManyToManyField(
         Group,
-        related_name="orchestration_users",  # Custom related name
+        related_name="orchestration_users",  
         blank=True
     )
     user_permissions = models.ManyToManyField(
         Permission,
-        related_name="orchestration_user_permissions",  # Custom related name
+        related_name="orchestration_user_permissions",
         blank=True
     )
     def __str__(self):
