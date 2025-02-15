@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'django_extensions', 
 ]
 
 MIDDLEWARE = [
@@ -90,17 +91,15 @@ WSGI_APPLICATION = 'OrchestrationRouteurCISCO.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.mysql',
-        # 'NAME': os.getenv('MYSQL_DATABASE', 'mydatabase'),
-        # 'USER': os.getenv('MYSQL_USER', 'user'),
-        # 'PASSWORD': os.getenv('MYSQL_PASSWORD', 'password'),
-        # 'HOST': os.getenv('DB_HOST', 'db'),  # Le nom du service Docker pour MySQL
-        # 'PORT': '3306',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'orchestration_routeur',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',  # Le nom du service Docker pour MySQL
+        'PORT': '3306',
         # 'OPTIONS': {'charset': 'utf8mb4',}
     }
 }
-
-AUTH_USER_MODEL = 'myapp.User'
 
 
 # Password validation
@@ -149,7 +148,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # Dossier pour collecter les fichiers st
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#AUTH_USER_MODEL = 'orchestration.CustomUser'
+#Utilisation du modèle Utilisateur personnalisé 
+AUTH_USER_MODEL = 'orchestration.User'
 LOGIN_REDIRECT_URL = '/config'  # Page d'accueil ou page spécifique
 LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
 LOGIN_URL = '/login/'            # URL de la page de connexion
