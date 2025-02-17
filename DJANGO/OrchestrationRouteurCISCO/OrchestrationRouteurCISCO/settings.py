@@ -156,3 +156,4 @@ LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
 CORS_ALLOW_ALL_ORIGINS = True
+

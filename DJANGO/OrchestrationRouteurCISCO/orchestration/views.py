@@ -4,11 +4,11 @@ from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.views.decorators.csrf import csrf_exempt
+from django.views import View
+from django.test import Client
 import json
 from .netconf_client import NetconfClient  # le script NETCONF
-
 import ipaddress
-from django.views import View
 import json
 import sys
 import os
@@ -26,7 +26,7 @@ import ssh_tool
 
 
 class MyLoginView(LoginView):
-    template_name = 'resgistration/login.html'
+    template_name = 'registration/login.html'
     redirect_authenticated_user = True
 
 
@@ -48,10 +48,12 @@ def config(request):
     template = loader.get_template("config.html")
     return HttpResponse(template.render())
 
+
+
 def get_dynamic_output(request):
     try:
-        # Appel de la fonction exec() pour récupérer les données
-        output = ssh_tool.exec()
+        # Appel de la fonction refresh() pour récupérer les données
+        output = ssh_tool.refresh()
         
         # Vérifiez si output est une liste
         if isinstance(output, list):
@@ -63,9 +65,10 @@ def get_dynamic_output(request):
         return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
     
 
+
 # API NETCONF - Création, modification, suppression d'une interface
 @csrf_exempt
-@login_required  # Ajouter ce décorateur pour limiter l'accès aux utilisateurs authentifiés
+#@login_required  # Ajouter ce décorateur pour limiter l'accès aux utilisateurs authentifiés
 def manage_interface(request):
     """API pour créer, modifier ou supprimer une interface via NETCONF."""
     if request.method == "POST":
@@ -106,29 +109,42 @@ def manage_interface(request):
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 
-
 class ConfigAPIView(View):
     def post(self, request, *args, **kwargs):
-
         # Récupérer les données JSON envoyées dans le body de la requête
+        print("Requête reçue !")  # Vérifie si la vue est bien appelée
+
         try:
             data = json.loads(request.body)  # Utilise json.loads pour parser la requête JSON
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:  # Capturer l'erreur correctement
+            print(f"Erreur lors du traitement du JSON : {str(e)}")  # Afficher l'erreur
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
-        
+
         # Extraire les données
         interface_name = data.get('interfaceName', None)
         ip_address = data.get('ipAddress', None)
         subnet_mask = data.get('subnetMask', None)
         sub_interface = data.get('subInterface', None)
         action = data.get('action', None)
+        mode = data.get('mode', None)
         
-        # Effectuer des traitements sur les données (par exemple, une configuration réseau)
-        
-        # Vous pouvez envoyer une réponse au client ici
-        response_data = {
-            'status': 'success',
-            'message': 'Configuration traitée avec succès!'
-        }
-        
-        return JsonResponse(response_data)  # Retourne un JSON au frontend
+        print(f"Interface Name: {interface_name}")
+        print(f"IP Address: {ip_address}")
+        print(f"Subnet Mask: {subnet_mask}")
+        print(f"Sub-Interface: {sub_interface}")
+        print(f"Action: {action}")
+        print(f"Mode: {mode}")
+
+        # Vérification des données (exemple : champs obligatoires)
+        if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
+            return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
+
+        # Effectuer des traitements sur les données (exemple : validation IP)
+        try:
+            # Appel de la fonction orchestration() pour envoyer les données
+            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
+            if output:
+                return JsonResponse({"data": output})
+        except Exception as e:
+            # Capture l'exception et renvoie les détails
+            return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)

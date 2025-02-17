@@ -1,6 +1,3 @@
-const interfaces = ['GigabitEthernet0/1', 'GigabitEthernet0/2', 'GigabitEthernet1/1', 'BundleEther0/1', 'BundleEther1/1', 'HundredGigE0/0/0', 'HundredGigE1/1/1', 'FastEthernet0/1', 'FastEthernet1/1'];
-const interfaceNameField = document.getElementById('interfaceName');
-
 // Envoi de la data au back-end
 document.getElementById('executeBtn').addEventListener('click', sendJsonData); 
 
@@ -9,9 +6,10 @@ function sendJsonData(){
     
     // Récupérer le token CSRF depuis les cookies
     const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)[1];
+    const output_body = document.querySelector('#Output p');
     
     // Send JSON data to the backend
-    fetch('http://localhost:8000/orchestration/config/', {
+    fetch('http://localhost:8000/orchestration/json/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -19,6 +17,17 @@ function sendJsonData(){
         },
         body: JSON.stringify(getData())
     })
+    .then(response => response.json())  // Récupère la réponse JSON
+    .then(data => {
+        console.log('Réponse du serveur:', data);  // Affiche la réponse du serveur
+        output_body.textContent = data.data;
+
+    })
+    .catch(error => {
+        console.error('Erreur:', error);  // Gère les erreurs
+
+        output_body.textContent = data.data;
+    });
 }
 
 function printOutput() {
@@ -33,17 +42,30 @@ function getData() {
     const subnetMask = document.getElementById('SubnetMask').value;
     const subInterface = document.getElementById('SubInterface').value;
     const action = document.getElementById('Action').value;
-    
+    let mode = "cli";
+
+    const selectedRadio = document.querySelector('input[name="flexRadioDefault"]:checked');
+
+    // Vérifier quel radio est sélectionné et modifie le mode en fonction
+    if (selectedRadio) {
+        if (selectedRadio.id === "flexRadioDefault1") {
+            mode = "cli";
+        } else if (selectedRadio.id === "flexRadioDefault2") {
+            mode = "netconf";
+        }
+    }
+
     const JsonData = {
         interfaceName: interfaceName,
         ipAddress: ipAddress,
         subnetMask: subnetMask,
         subInterface: subInterface,
         action: action,
+        mode : mode,
     };
     
-    if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action) {
-        console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action });
+    if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action || !mode) {
+        console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action, mode });
     }
     
     return JsonData;
@@ -56,12 +78,10 @@ function loadDynamicData() {
     const tbody = document.querySelector('#interfaceTable tbody');
     
     tbody.innerHTML = '';
-
+    
     // Afficher le spinner de chargement (remplacer le contenu par le spinner)
     const loadingRow = document.getElementById('loadingRow');
     loadingRow.style.display = 'table-row'; // Afficher le spinner
-    
-    
     
     // Effectuer une requête AJAX pour obtenir les données
     fetch('/orchestration/dynamic-output/')
