@@ -56,18 +56,6 @@ def ssh_configure_netmiko(config_commands):
     except Exception as e:
         return f"Erreur inattendue : {str(e)}"
 
-<<<<<<< Updated upstream
-def exec():
-    host = "172.16.10.11"                   #importer la data depuis la bdd
-    username = "admin"
-    password = "c79e97SGVg7dc"
-    enable = "Admin123INT"
-    interface_name = ""
-    command = "telnet" # Exemple de commande Cisco à exécuter
-    config_commands = [
-        f"",
-    ]
-=======
 
 def orchestration(given_interface_name, given_ip_address, given_subnet_mask, given_sub_interface, given_action, send_mode):
 
@@ -106,7 +94,6 @@ def refresh():
 
     config_commands = ["show ip interface brief"]  # Exemple de commande Cisco à exécuter
   
->>>>>>> Stashed changes
     try:
         # Connexion et exécution de la commande
         output = ssh_configure_netmiko(config_commands)
