@@ -1,5 +1,5 @@
 import os
-from dotenv import load_dotenv
+import dotenv
 from ncclient import manager
 from ncclient.xml_ import to_ele
 
@@ -7,7 +7,7 @@ class NetconfClient:
     """Client NETCONF sécurisé pour gérer les interfaces d'un routeur Cisco IOS-XE."""
     
     def __init__(self):
-        load_dotenv()
+        dotenv.load_dotenv()
         self.host = os.getenv("NETCONF_HOST")
         self.username = os.getenv("NETCONF_USER")
         self.password = os.getenv("NETCONF_PASS")

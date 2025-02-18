@@ -38,11 +38,15 @@ def ssh_configure_netmiko(config_commands):
         connection.enable()
         
         # Exécution de la commande
-        print("Passage en mode configuration...")
-        output = connection.send_config_set(
-            config_commands,
-            delay_factor = 2,
-        )
+
+        if isinstance(config_commands, str):
+            output = connection.send_command(config_commands, use_textfsm=True)
+        else:
+            print("Passage en mode configuration...")
+            output = connection.send_config_set(
+                config_commands,
+                delay_factor = 2,
+            )
         
         # Déconnexion propre
         connection.disconnect()
@@ -65,6 +69,7 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
                 config_commands = [
                     f"interface {given_interface_name}.{given_sub_interface}",
                     f"ip address {given_ip_address} {given_subnet_mask}",
+                    "end"
                     "write memory"
                 ]
             case "0":
@@ -77,7 +82,7 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
         try:
             # Connexion et exécution de la commande
             output = ssh_configure_netmiko(config_commands)
-            print("Output de la commande SSH:", output)  # Affiche la sortie de la commande
+            print("Output de la commande SSH:\n", output)  # Affiche la sortie de la commande
 
             if output:
                 return output
@@ -92,19 +97,25 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
 
 def refresh():
 
-    config_commands = ["show ip interface brief"]  # Exemple de commande Cisco à exécuter
+    command = "show ip interface brief"
   
     try:
         # Connexion et exécution de la commande
-        output = ssh_configure_netmiko(config_commands)
-        print("Output de la commande SSH:", output)  # Affiche la sortie de la commande
+        output = ssh_configure_netmiko(command)
+        print("Output de la commande SSH:\n", output)  # Affiche la sortie de la commande
+
+        if isinstance(output, str):
+            print("string2")
 
         if isinstance(output, list):
+            print("l'output est une liste")
             for interface in output:
                 print(interface)  # Affiche chaque dictionnaire                
                 print(f"Interface: {interface.get('interface', 'N/A')} | IP: {interface.get('ip_address', 'N/A')} | Status: {interface.get('status', 'N/A')} | Protocol: {interface.get('proto', 'N/A')}")
         else:
-            print(f"Erreur lors de l'exécution de la commande : {output}")  # Affiche l'erreur si ce n'est pas une liste
+            print(f"Erreur lors de l'exécution de la commande : {command}")  # Affiche l'erreur si ce n'est pas une liste
+            print(f"Erreur : \n{output}")  # Affiche l'erreur si ce n'est pas une liste
+
         return output
     except Exception as e:
         print(f"Erreur dans refresh(): {str(e)}")  # Capture l'exception et l'affiche

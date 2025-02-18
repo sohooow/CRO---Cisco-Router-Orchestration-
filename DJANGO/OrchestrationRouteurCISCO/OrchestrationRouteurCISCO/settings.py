@@ -12,15 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
-import socket
 
-# Vérifiez si AF_UNIX est disponible
-if hasattr(socket, 'AF_UNIX'):
-    # Code spécifique aux sockets Unix
-    pass
-else:
-    # Code alternatif pour les systèmes qui ne supportent pas AF_UNIX
-    pass
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -90,15 +82,15 @@ WSGI_APPLICATION = 'OrchestrationRouteurCISCO.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'orchestration_routeur',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',  # Le nom du service Docker pour MySQL
-        'PORT': '3306',
-        # 'OPTIONS': {'charset': 'utf8mb4',}
-    }
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'orchestration_routeur',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': 'localhost',  # Le nom du service Docker pour MySQL
+#         'PORT': '3306',
+#         # 'OPTIONS': {'charset': 'utf8mb4',}
+#     }
 }
 
 
@@ -156,4 +148,3 @@ LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
 CORS_ALLOW_ALL_ORIGINS = True
-
