@@ -4,33 +4,36 @@ from django.contrib.auth.models import AbstractUser
 class Router(models.Model) : 
     hostname = models.CharField(max_length=100, default='Unknown')
     device_type = models.CharField(max_length=100, default='Unknown')
-    ip_address = models.GenericIPAddressField()
+    ip_address = models.GenericIPAddressField(unique='True')
+
+    def __str__(self):
+        return self.hostname
 
 class User(AbstractUser) : 
-    username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=100)
     role = models.CharField(max_length=100, default='Unknown')
 
-
+    def __str__(self):
+        return self.username
+    
 class Interface(models.Model) : 
     router = models.ForeignKey('Router', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     ip_address = models.GenericIPAddressField()
-    subnet_mask = models.CharField(max_length=15)
-    status  = models.CharField(max_length=100)
+    subnet_mask = models.CharField(max_length=39)
+    status  = models.CharField(max_length=100, choices=[('active','Active'),('inactive', 'Inactive')])
 
-class Configuration(models.Model) : 
-    router_id = models.ForeignKey('Router',on_delete=models.CASCADE)
-    interface_id = models.ForeignKey('Interface', on_delete=models.CASCADE)
-    config_type = models.CharField(max_length=100 )
+    def __str__(self):
+        return f"{self.router.hostname} - {self.name}"
 
 class Log(models.Model) : 
     router = models.ForeignKey('Router', on_delete=models.CASCADE)
     action = models.CharField(max_length=100)
-
+    user = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.interface_name} - {self.ip_address}"
+        return f"Action: {self.action} on {self.router.hostname}"
+
+
 
 
 
