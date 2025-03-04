@@ -13,6 +13,10 @@ import json
 import sys
 import os
 
+from rest_framework import viewsets
+from .models import Router, User, Interface, Log
+from serializers import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
+
 import logging
 
 # Créez un logger
@@ -148,3 +152,22 @@ class ConfigAPIView(View):
         except Exception as e:
             # Capture l'exception et renvoie les détails
             return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
+
+
+#Ajout des vues pour la base de données 
+
+class RouterViewSet(viewsets.ModelViewSet):
+    queryset = Router.objects.all()
+    serializer_class = RouterSerializer
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class LogSViewSet(viewsets.ModelViewSet) :
+    queryset = Log.objects.all()
+    serializer_class =LogSerializer
+
+class InterfaceViewSet(viewsets.ModelViewSet) :
+    queryset = Interface.objects.all()
+    serializer_class = InterfaceSerializer 
