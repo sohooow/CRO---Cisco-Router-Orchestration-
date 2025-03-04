@@ -1,33 +1,38 @@
 // Envoi de la data au back-end
-document.getElementById('executeBtn').addEventListener('click', sendJsonData); 
+document.getElementById('executeBtn').addEventListener('click', async function () {
+    await sendJsonData();  // Attendre la fin de sendJsonData()
+    loadDynamicData();  // Puis exécuter loadDynamicData()
+});
 
-function sendJsonData(){
+async function sendJsonData(){
     console.log(getData());
     
-    // Récupérer le token CSRF depuis les cookies
-    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)[1];
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];  
+    if (!csrfToken) {
+        console.error("Token CSRF introuvable !");
+        return;
+    }
+
     const output_body = document.querySelector('#Output p');
-    
-    // Send JSON data to the backend
-    fetch('http://localhost:8000/orchestration/json/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,  // Ajouter le token CSRF dans l'en-tête
-        },
-        body: JSON.stringify(getData())
-    })
-    .then(response => response.json())  // Récupère la réponse JSON
-    .then(data => {
-        console.log('Réponse du serveur:', data);  // Affiche la réponse du serveur
-        output_body.textContent = data.data;
 
-    })
-    .catch(error => {
-        console.error('Erreur:', error);  // Gère les erreurs
+    try {
+        const response = await fetch('http://localhost:8000/orchestration/json/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(getData()),
+        });
 
-        output_body.textContent = data.data;
-    });
+        const data = await response.json();
+        console.log('Réponse du serveur:', data);
+        output_body.textContent = data.data || "Aucune réponse.";
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        output_body.textContent = "Erreur lors de l'exécution.";
+    }
 }
 
 function printOutput() {

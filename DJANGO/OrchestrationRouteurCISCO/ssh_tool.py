@@ -47,6 +47,10 @@ def ssh_configure_netmiko(config_commands):
                 config_commands,
                 delay_factor = 2,
             )
+
+        # Exécution de "write memory" séparément après la configuration
+        print("Enregistrement de la configuration...")
+        output_write = connection.send_command("write memory")
         
         # Déconnexion propre
         connection.disconnect()
@@ -62,34 +66,44 @@ def ssh_configure_netmiko(config_commands):
 
 
 def orchestration(given_interface_name, given_ip_address, given_subnet_mask, given_sub_interface, given_action, send_mode):
-
+    
     match given_action:
             case "1":
                 print("cas numero 1 : créer/modifier")
                 config_commands = [
                     f"interface {given_interface_name}.{given_sub_interface}",
                     f"ip address {given_ip_address} {given_subnet_mask}",
-                    "end"
-                    "write memory"
+                    "end",
                 ]
+
             case "0":
                 print("cas numero 2 : supprimer")
                 config_commands = [
                     f"no interface {given_interface_name}.{given_sub_interface}",
-                    "write memory"
+                    "end",
                 ]
+
+
+
     if send_mode == "cli":
         try:
             # Connexion et exécution de la commande
             output = ssh_configure_netmiko(config_commands)
             print("Output de la commande SSH:\n", output)  # Affiche la sortie de la commande
 
+            refresh_output = refresh()
+            print(f"Résultat après la modification de l'interface : {refresh_output}")
+
             if output:
                 return output
+            
+
             
         except Exception as e:
             print(f"Erreur dans orchestration(): {str(e)}")  # Capture l'exception et l'affiche
             return {"error": f"Erreur dans orchestration(): {str(e)}"}
+        
+
     elif send_mode == "netconf":
         return {"netconf": "Mode non paramétré"}
     else:
