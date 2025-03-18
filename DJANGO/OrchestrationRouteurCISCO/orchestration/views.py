@@ -49,7 +49,7 @@ def validate_ip_and_mask(ip, mask):
 
 #@login_required                #décommenter @login_required pour sécuriser la page avec l'authentification 
 def config(request):
-    template = loader.get_template("config.html")
+    template = loader.get_template("config.html")           #peut être fait en une ligne avec django de base
     return HttpResponse(template.render())
 
 
@@ -62,7 +62,7 @@ def get_dynamic_output(request):
         # Vérifiez si output est une liste
         if isinstance(output, list):
             return JsonResponse({"data": output})
-        else:
+        else:           #remplacer par une exception
             return JsonResponse({"error": output}, status=500)  # Retourne un message d'erreur si output n'est pas une liste
     except Exception as e:
         # Capture l'exception et renvoie les détails
@@ -78,6 +78,8 @@ def manage_interface(request):
     if request.method == "POST":
         data = json.loads(request.body)
 
+
+#formulaire django
         interface_name = data.get("interface")
         ip = data.get("ip")
         mask = data.get("mask")
@@ -88,6 +90,9 @@ def manage_interface(request):
         if ip and mask:
             if not validate_ip_and_mask(ip, mask):
                 return JsonResponse({"error": "Adresse IP ou masque non valide"}, status=400)
+            
+
+
 
         # Récupérer le routeur à partir de la base de données
         try:
@@ -99,6 +104,7 @@ def manage_interface(request):
         client = NetconfClient(router.ip, router.username, router.password)
         client.connect()
 
+        #mettre en anglais les actions (gérer le select)
         if action == "Ajouter":
             response = client.create_or_update_interface(interface_name, ip, mask, operation="merge")
         elif action == "Modifier":
@@ -146,6 +152,7 @@ class ConfigAPIView(View):
         # Effectuer des traitements sur les données (exemple : validation IP)
         try:
             # Appel de la fonction orchestration() pour envoyer les données
+            #modifier le nom de la fonction
             output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
             if output:
                 return JsonResponse({"data": output})
@@ -170,4 +177,4 @@ class LogViewSet(viewsets.ModelViewSet) :
 
 class InterfaceViewSet(viewsets.ModelViewSet) :
     queryset = Interface.objects.all()
-    serializer_class = InterfaceSerializer 
+    serializer_class = InterfaceSerializer

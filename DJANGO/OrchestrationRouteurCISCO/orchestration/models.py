@@ -29,6 +29,7 @@ class Log(models.Model) :
     router = models.ForeignKey('Router', on_delete=models.CASCADE)
     action = models.CharField(max_length=100)
     user = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True)
+    #ajouter la date et l'interface et on est bon
 
     def __str__(self):
         return f"Action: {self.action} on {self.router.hostname}"

@@ -98,6 +98,9 @@ function loadDynamicData() {
         if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
             // Si les données sont présentes et sous forme de tableau non vide
             data.data.forEach(interface => {
+
+                if (interface.status.trim().toLowerCase() !== "deleted") {
+
                 const row = document.createElement('tr');
                 
                 // Création des cellules
@@ -119,6 +122,7 @@ function loadDynamicData() {
                 
                 // Ajouter la ligne au tableau
                 tbody.appendChild(row);
+                }
             });
         } else {
             // Si aucune donnée n'est disponible, afficher un message
@@ -152,3 +156,14 @@ document.getElementById('refresh').addEventListener('click', loadDynamicData);
 // Charger les données dynamiques lorsque la page est prête
 document.addEventListener('DOMContentLoaded', loadDynamicData);
 
+
+
+//soit framework côté client qui va communiquer en json avec le back(pas d'html), le fw s'occupe de faire les requetes
+//soit on utilise htmx, utiliser que de l'http et de l'html. envoi de formulaire au back, le back renvoie de l'html
+//réorganiser le front (les fichiers) et la discussion avec le serveur
+
+//htmx : django renvoie le table dans la vue
+
+//eviter les majuscules avec l'id
+
+//
