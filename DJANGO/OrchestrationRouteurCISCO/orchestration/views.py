@@ -15,7 +15,8 @@ import os
 
 from rest_framework import viewsets
 from .models import Router, User, Interface, Log
-from serializers import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
+from .serializers import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
+
 
 import logging
 
