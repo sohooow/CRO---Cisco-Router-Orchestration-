@@ -1,12 +1,4 @@
-#POST http://127.0.0.1:8000/orchestration/api/routers/
-#Content-Type: application/json
+GET http://127.0.0.1:8000/orchestration/api/routers/
 
-POST http://127.0.0.1:8000/api/routers/
-Content-Type: application/json
 
-{
-    "name": "Routeur1",
-    "ip_address": "192.168.1.1",
-    "status": "Active"
-}
 

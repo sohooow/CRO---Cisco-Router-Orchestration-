@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_extensions', 
     'rest_framework',
-
 ]
 
 MIDDLEWARE = [
@@ -66,6 +65,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny', 
     ]
 }
+
+
 
 TEMPLATES = [
     {
@@ -90,7 +91,7 @@ WSGI_APPLICATION = 'OrchestrationRouteurCISCO.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+     'default': {
          'ENGINE': 'django.db.backends.mysql',
          'NAME': 'orchestration_routeur',
          'USER': 'root',
@@ -98,7 +99,7 @@ DATABASES = {
          'HOST': 'localhost',  # Le nom du service Docker pour MySQL
          'PORT': '3306',
          # 'OPTIONS': {'charset': 'utf8mb4',}
-    }
+     }
 }
 
 
@@ -155,6 +156,4 @@ LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
 LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
-
-#on ne devrait pas avoir à gérer le cors avec HTMX, le mettre en all origins est une grosse faille de sécurité
 CORS_ALLOW_ALL_ORIGINS = True
