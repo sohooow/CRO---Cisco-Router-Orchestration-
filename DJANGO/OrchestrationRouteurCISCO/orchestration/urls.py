@@ -16,7 +16,7 @@ router.register(r'users', UserViewSet)
 
 # Inclusion des API REST sous `/api/`
 urlpatterns = [
-    path("/", include(router.urls)),
+    path("api/", include(router.urls)),
     path("login/", LoginView.as_view(template_name='registration/login.html'), name='login'),
     path("auth/", views.auth, name="auth"),
     path("config/", views.config, name="config"),
