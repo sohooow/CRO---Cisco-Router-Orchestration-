@@ -9,7 +9,7 @@
     <!-- Lier le fichier CSS -->
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
 
-    <!-- favicon -->
+    <!-- Bootstrap CSS -->
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
 
     <!-- Bootstrap CSS -->
@@ -26,13 +26,7 @@
     <!-- Header -->
     <div class="header-container">
         <h1>Orchestration d'un routeur Cisco</h1>
-        <button id="refresh" class="btn btn-primary btn-mode" 
-                hx-get="/orchestration/dynamic-output/" 
-                hx-target="#interfaceTable tbody" 
-                hx-swap="innerHTML">
-            Rafraîchir la liste des interfaces
-        </button>
-
+        <button id="refresh" class="btn btn-primary btn-mode">Rafraichir la liste des interfaces</button>
     </div>
     
     <div class="container">
@@ -44,38 +38,27 @@
                     
                     <!--Data Section-->
                     <div id="dataSection" class="command-container" style="display: block;">
-                        <form   id="cliForm"       
-                                hx-post="/orchestration/send-subinterface/" 
-                                hx-trigger="submit" 
-                                hx-target="#Resultat" 
-                                hx-swap="outerHTML"
-                                hx-headers='{"Content-Type": "application/json"}'
-                                hx-ext="json-enc"
-                                onsubmit="console.log(JSON.stringify(Object.fromEntries(new FormData(this))))"
-                        >                                
-
-                            {% csrf_token %}
-
+                        <form id="cliForm">
                             <div class="mb-3">
                                 <label for="interfaceName" class="form-label">Nom de l'interface</label>
-                                <input type="text" name="interfaceName" id="interfaceName" class="form-control" placeholder="Exemple : GigabitEthernet0/1" required>
+                                <input type="text" id="interfaceName" class="form-control" placeholder="Exemple : GigabitEthernet0/1" required>
                             </div>
                             <div class="mb-3">
                                 <label for="ipAddress" class="form-label">Adresse IP</label>
-                                <input type="text" name="ipAddress" id="ipAddress" class="form-control" placeholder="Exemple : 192.168.0.1">
+                                <input type="text" id="ipAddress" class="form-control" placeholder="Exemple : 192.168.0.1" >
                             </div>
                             <div class="mb-3">
                                 <label for="SubnetMask" class="form-label">Masque de sous-réseau</label>
-                                <input type="text" name="subnetMask" id="subnetMask" class="form-control" placeholder="Exemple : 255.255.255.0">
+                                <input type="text" id="SubnetMask" class="form-control" placeholder="Exemple : 255.255.255.0" >
                             </div>
                             <div class="mb-3">
                                 <label for="SubInterface" class="form-label">Sous-interface</label>
-                                <input type="text" name="subInterface" id="subInterface" class="form-control" placeholder="Exemple : 2">
+                                <input type="text" id="SubInterface" class="form-control" placeholder="Exemple : 2" >
                             </div>
                             
                             <div class="mb-3">
                                 <label for="Action" class="form-label">Action</label>
-                                <select name="action" id="action" class="form-select">
+                                <select id="Action" class="form-select">
                                     <option value="1">Ajouter</option>
                                     <option value="1">Modifier</option>
                                     <option value="0">Supprimer</option>
@@ -83,30 +66,36 @@
                             </div>
                             
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli" checked>
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" checked>
                                 <label class="form-check-label" for="flexRadioDefault1">
                                     CLI
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="mode" id="radioNETCONF" value="netconf">
+                                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
                                 <label class="form-check-label" for="flexRadioDefault2">
                                     NETCONF
                                 </label>
                             </div>
-                            <button type="submit" class="btn btn-primary">Exécuter</button>
+                            
+                            <button type="button" id="executeBtn" class="btn btn-primary">Exécuter</button>
                         </form>
                         <div class="output" id="Output">
-                            <p id="Resultat">Les résultats de la commande s'afficheront ici...</p>
+                            <p id = "Resultat">Les résultats de la commande s'afficheront ici...</p>
                         </div>
                     </div>
                 </div>
             </div>
             
+            
+            <!-- Bootstrap JS -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+            
+            
             <div class="col-md-6">                
                 <div class="command-container">
                     <!-- Tableau vide qui sera rempli dynamiquement avec JavaScript -->
-                    <table id="interfaceTable" class="table">
+                    <table id="interfaceTable">
                         <thead>
                             <tr>
                                 <th>Interface</th>
@@ -115,7 +104,7 @@
                                 <th>Protocol</th>
                             </tr>
                             <!-- Le spinner de chargement sera inséré ici temporairement -->
-                            <tr id="loadingRow" style="display: none;">
+                            <tr id="loadingRow">
                                 <td colspan="4" class="text-center">
                                     <div class="spinner-border" role="status">
                                         <span class="visually-hidden">Chargement...</span>
@@ -123,11 +112,8 @@
                                 </td>
                             </tr>
                         </thead>
-                        <tbody  hx-get="/orchestration/dynamic-output/" 
-                                hx-trigger="load" 
-                                hx-target="this" 
-                                hx-swap="innerHTML">
-                            <!-- Les lignes seront remplacées dynamiquement par HTMX -->
+                        <tbody>
+                            <!-- Les lignes du tableau seront ajoutées dynamiquement ici -->
                         </tbody>
                     </table>
                 </div>
@@ -135,18 +121,9 @@
         </div>
     </div>
     
+    <!-- Lier le fichier JavaScript -->
+    <script src="{% static 'js/script.js' %}"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
-    <script>
-        // Afficher le spinner avant la requête
-        document.body.addEventListener('htmx:beforeRequest', function() {
-            document.getElementById('loadingRow').style.display = 'table-row';
-        });
-
-        // Masquer le spinner après la requête
-        document.body.addEventListener('htmx:afterRequest', function() {
-            document.getElementById('loadingRow').style.display = 'none';
-        });
-    </script>
+    
 </body>
 </html>

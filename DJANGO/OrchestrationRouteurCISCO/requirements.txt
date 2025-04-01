@@ -9,3 +9,7 @@ redis
 django_extensions
 python-dotenv
 pymysql
+gunicorn
+djangorestframework
+serializers
+django_htmx

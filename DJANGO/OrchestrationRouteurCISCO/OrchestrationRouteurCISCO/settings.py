@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
 
 ]
 
@@ -95,8 +96,8 @@ DATABASES = {
          'ENGINE': 'django.db.backends.mysql',
          'NAME': 'orchestration_routeur',
          'USER': 'root',
-         'PASSWORD': '',
-         'HOST': 'localhost',  # Le nom du service Docker pour MySQL
+         'PASSWORD': 'rootpassword',
+         'HOST': 'mysql_db',  # Le nom du service Docker pour MySQL
          'PORT': '3306',
          # 'OPTIONS': {'charset': 'utf8mb4',}
      }
@@ -156,4 +157,6 @@ LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
 LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
+
+#on ne devrait pas avoir à gérer le cors avec HTMX, le mettre en all origins est une grosse faille de sécurité
 CORS_ALLOW_ALL_ORIGINS = True

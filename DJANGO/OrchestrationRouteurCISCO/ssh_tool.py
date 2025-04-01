@@ -8,7 +8,7 @@ password = "c79e97SGVg7dc"
 enable = "Admin123INT"  
 
 # Définir les paramètres de connexion pour Netmiko
-device = {
+device = {                              #importer depuis la bdd
     "device_type": "cisco_ios",
     "host": host,
     "username": username,
@@ -17,39 +17,24 @@ device = {
 }
 
 def ssh_configure_netmiko(config_commands):
-    """
-    Se connecte en SSH à un routeur Cisco IOS-XE avec Netmiko et exécute une commande.
-    
-    :param host: Adresse IP du routeur
-    :param username: Nom d'utilisateur pour l'authentification
-    :param password: Mot de passe pour l'authentification
-    :param command: Commande à exécuter sur le routeur
-    :return: La sortie de la commande ou une erreur
-    """
-
 
     try:
-        print(f"Connexion à {host} avec Netmiko...")
         # Connexion au routeur
         connection = ConnectHandler(**device)
 
         # Passer en mode enable
-        print("Passage en mode enable...")
         connection.enable()
         
         # Exécution de la commande
-
         if isinstance(config_commands, str):
             output = connection.send_command(config_commands, use_textfsm=True)
         else:
-            print("Passage en mode configuration...")
             output = connection.send_config_set(
                 config_commands,
                 delay_factor = 2,
             )
 
         # Exécution de "write memory" séparément après la configuration
-        print("Enregistrement de la configuration...")
         output_write = connection.send_command("write memory")
         
         # Déconnexion propre
@@ -69,7 +54,6 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
     
     match given_action:
             case "1":
-                print("cas numero 1 : créer/modifier")
                 config_commands = [
                     f"interface {given_interface_name}.{given_sub_interface}",
                     f"ip address {given_ip_address} {given_subnet_mask}",
@@ -77,7 +61,6 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
                 ]
 
             case "0":
-                print("cas numero 2 : supprimer")
                 config_commands = [
                     f"no interface {given_interface_name}.{given_sub_interface}",
                     "end",
@@ -89,10 +72,8 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
         try:
             # Connexion et exécution de la commande
             output = ssh_configure_netmiko(config_commands)
-            print("Output de la commande SSH:\n", output)  # Affiche la sortie de la commande
 
-            refresh_output = refresh()
-            print(f"Résultat après la modification de l'interface : {refresh_output}")
+            refresh_output = get_interfaces_details()
 
             if output:
                 return output
@@ -109,7 +90,7 @@ def orchestration(given_interface_name, given_ip_address, given_subnet_mask, giv
     else:
         return {"error": "Mode non valide"}
 
-def refresh():
+def get_interfaces_details():
 
     command = "show ip interface brief"
   

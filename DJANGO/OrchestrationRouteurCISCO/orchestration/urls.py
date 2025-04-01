@@ -2,7 +2,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView, LogoutView
-from .views import ConfigAPIView, RouterViewSet, InterfaceViewSet, LogViewSet, UserViewSet
+from rest_framework.routers import DefaultRouter
+from . import views
+from .views import modifySubInterface, RouterViewSet, InterfaceViewSet, LogViewSet, UserViewSet
 from . import views
 from rest_framework.routers import DefaultRouter
 
@@ -23,7 +25,7 @@ urlpatterns = [
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('manage-interface/', views.manage_interface, name='manage_interface'),
-    path('json/', ConfigAPIView.as_view(), name='config-api'),
+    path('send-subinterface/', modifySubInterface.as_view(), name='config-api'),
 
 ] 
 

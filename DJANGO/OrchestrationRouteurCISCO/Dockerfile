@@ -22,9 +22,10 @@ RUN adduser \
     appuser
 
 # Installer les dépendances système nécessaires pour mysqlclient et autres bibliothèques
-RUN apt-get update && apt-get install -y \
-    libmariadb-dev gcc build-essential libffi-dev libssl-dev \
-    && apt-get clean
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmariadb-dev gcc build-essential libffi-dev libssl-dev nginx\
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copier le fichier requirements.txt dans le conteneur
 COPY requirements.txt /app/
@@ -38,11 +39,18 @@ COPY . .
 # Assurez-vous que les fichiers statiques sont collectés (si nécessaire)
 RUN python3 manage.py collectstatic --noinput || true
 
+# Copier la configuration Nginx dans le conteneur
+#COPY nginx.conf /etc/nginx/nginx.conf
+
 # Passer à l'utilisateur non privilégié
 USER appuser
 
 # Exposer le port 8000 pour le serveur Django
-EXPOSE 8000
+EXPOSE 8000 
+#EXPOSE 8000 8000
 
-# Commande de démarrage
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8001"]
+# Commande de démarrage DEV
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
+# Commande de démarrage PROD
+#CMD service nginx start && gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8000 --workers 4
