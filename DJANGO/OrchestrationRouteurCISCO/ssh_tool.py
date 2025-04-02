@@ -50,13 +50,15 @@ def ssh_configure_netmiko(config_commands):
         return f"Erreur inattendue : {str(e)}"
 
 
-def orchestration(given_interface_name, given_ip_address, given_subnet_mask, given_sub_interface, given_action, send_mode):
+def sendConfig(given_interface_name, given_ip_address, given_subnet_mask, given_sub_interface, given_action, send_mode):
     
     match given_action:
             case "1":
                 config_commands = [
                     f"interface {given_interface_name}.{given_sub_interface}",
+                    "encapsulation dot1Q 1",
                     f"ip address {given_ip_address} {given_subnet_mask}",
+                    "no shutdown",
                     "end",
                 ]
 

@@ -167,7 +167,7 @@ class modifySubInterface(View):
             return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
 
         try:
-            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
+            output = ssh_tool.sendConfig(interface_name, ip_address, subnet_mask, sub_interface, action, mode)         
             return JsonResponse({"data": output})
         except Exception as e:
             # Capture l'exception et renvoie les détails
