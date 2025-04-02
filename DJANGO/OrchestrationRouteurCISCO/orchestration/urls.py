@@ -23,11 +23,12 @@ urlpatterns = [
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('manage-interface/', views.manage_interface, name='manage_interface'),
-    path('json/', ConfigAPIView.as_view(), name='config-api'),
+    path('json/', ConfigAPIView.as_view(), name='config'),  
 
 ] 
 
 # Ajout du support des fichiers statiques
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
+
 
 

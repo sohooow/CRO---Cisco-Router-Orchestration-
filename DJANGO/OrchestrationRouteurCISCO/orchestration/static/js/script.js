@@ -166,4 +166,10 @@ document.addEventListener('DOMContentLoaded', loadDynamicData);
 
 //eviter les majuscules avec l'id
 
-//
+//Connexion du back avec le front 
+
+fetch("http://127.0.0.1:8000/orchestration/api/routers/")
+    .then(response => response.json())
+    .then(data => console.log("Données reçues :", data))
+    .catch(error => console.error("Erreur de connexion avec Django:", error));
+

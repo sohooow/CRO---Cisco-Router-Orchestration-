@@ -1,4 +1,11 @@
-GET http://127.0.0.1:8000/orchestration/api/routers/
+POST http://localhost:8000/orchestration/interface/
+Content-Type: application/json
 
-
-
+{
+    "interfaceName": "eth0",
+    "ipAddress": "192.168.1.1",
+    "subnetMask": "255.255.255.0",
+    "subInterface": "eth0.1",
+    "action": "enable",
+    "mode": "static"
+}
