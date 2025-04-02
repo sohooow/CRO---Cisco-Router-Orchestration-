@@ -3,7 +3,8 @@ from django.http import HttpResponse, JsonResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.test import Client
 from django.http import JsonResponse
@@ -13,13 +14,11 @@ import ipaddress
 import json
 import sys
 import os
-
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Router, User, Interface, Log
-from .serializers import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
-
+from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
 import logging
 
 #@csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
@@ -42,6 +41,7 @@ def auth(request):
     template = loader.get_template("auth.html")
     return HttpResponse(template.render())
 
+
 def validate_ip_and_mask(ip, mask):
     """Valide l'adresse IP et le masque de sous-réseau."""
     try:
@@ -51,25 +51,44 @@ def validate_ip_and_mask(ip, mask):
         return False
     return True
 
+
 #@login_required                #décommenter @login_required pour sécuriser la page avec l'authentification 
 def config(request):
-    template = loader.get_template("config.html")           #peut être fait en une ligne avec django de base
-    return HttpResponse(template.render())
-
+    return render(request, "config.html")
 
 def get_dynamic_output(request):
     try:
-        # Appel de la fonction refresh() pour récupérer les données
-        output = ssh_tool.refresh()
-        
-        # Vérifiez si output est une liste
+        # Récupération des données depuis SSH
+        output = ssh_tool.get_interfaces_details()
+
+        # Vérification si output est une liste
         if isinstance(output, list):
-            return JsonResponse({"data": output})
-        else:           #remplacer par une exception
-            return JsonResponse({"error": output}, status=500)  # Retourne un message d'erreur si output n'est pas une liste
+
+            filtered_output = [item for item in output if item["status"] != "deleted"]
+
+            html_rows = "".join(
+                f"""
+                <tr>
+                    <td>{item['interface']}</td>
+                    <td>{item['ip_address']}</td>
+                    <td>{item['status']}</td>
+                    <td>{item['proto']}</td>
+                </tr>
+                """ for item in filtered_output
+            )
+            return HttpResponse(html_rows)
+
+        else:  # Cas d'erreur si output n'est pas une liste
+            return HttpResponse(
+                '<tr><td colspan="4" class="text-danger">Erreur lors de la récupération des données</td></tr>', 
+                status=500
+            )
+
     except Exception as e:
-        # Capture l'exception et renvoie les détails
-        return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
+        return HttpResponse(
+            f'<tr><td colspan="4" class="text-danger">Erreur: {str(e)}</td></tr>', 
+            status=500
+        )
     
 
 # API NETCONF - Création, modification, suppression d'une interface
@@ -93,6 +112,7 @@ def manage_interface(request):
             if not validate_ip_and_mask(ip, mask):
                 return JsonResponse({"error": "Adresse IP ou masque non valide"}, status=400)
             
+
 
         # Récupérer le routeur à partir de la base de données
         try:
@@ -119,45 +139,36 @@ def manage_interface(request):
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 
-class ConfigAPIView(View):
+@method_decorator(csrf_exempt, name='dispatch')
+class modifySubInterface(View):
     def post(self, request, *args, **kwargs):
         # Récupérer les données JSON envoyées dans le body de la requête
         print("Requête POST reçue !")  # Vérifie si la vue est bien appelée
 
+
         try:
-            data = json.loads(request.body)  # Utilise json.loads pour parser la requête JSON
-            print(f"Data received: {data}")
-        except json.JSONDecodeError :  # Capturer l'erreur correctement
+            data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError as e:
+            print(f"Erreur JSON: {str(e)}")
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-        # Extraire les données
-        interface_name = data.get('interfaceName', None)
-        ip_address = data.get('ipAddress', None)
-        subnet_mask = data.get('subnetMask', None)
-        sub_interface = data.get('subInterface', None)
-        action = data.get('action', None)
-        mode = data.get('mode', None)
-        
-        print(f"Interface Name: {interface_name}")
-        print(f"IP Address: {ip_address}")
-        print(f"Subnet Mask: {subnet_mask}")
-        print(f"Sub-Interface: {sub_interface}")
-        print(f"Action: {action}")
-        print(f"Mode: {mode}")
+        # Extraction des champs
+        interface_name = data.get('interfaceName')
+        ip_address = data.get('ipAddress')
+        subnet_mask = data.get('subnetMask')
+        sub_interface = data.get('subInterface')
+        action = data.get('action')
+        mode = data.get('mode', 'cli')
 
-        # Vérification des données (exemple : champs obligatoires)
-        if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
+        # Vérification des champs
+        if not all([interface_name, ip_address, subnet_mask, sub_interface, action]):
             return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
 
-        # Effectuer des traitements sur les données (exemple : validation IP)
         try:
-            # Appel de la fonction orchestration() pour envoyer les données
-            #modifier le nom de la fonction
             output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
-            if output:
-                return JsonResponse({"data": output})
+            return JsonResponse({"data": output})
         except Exception as e:
             # Capture l'exception et renvoie les détails
             return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
@@ -174,6 +185,7 @@ class ConfigAPIView(View):
             )
             
             return JsonResponse({'message': 'Configuration enregistrée', 'id': config.id}, status=201)
+            return JsonResponse({"error": f"Erreur: {str(e)}"}, status=500)
 
         except Exception as e:
             return JsonResponse({'error': f'Erreur lors de l’enregistrement: {str(e)}'}, status=500)
