@@ -5,7 +5,13 @@ document.getElementById('executeBtn').addEventListener('click', async function (
 });
 
 async function sendJsonData(){
-    console.log(getData());
+    const data = getData();
+    if (!data) {
+        console.error("Données invalides, requête non envoyée");
+        return;
+    }
+
+    console.log(data);
     
     const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];  
     if (!csrfToken) {
@@ -16,7 +22,7 @@ async function sendJsonData(){
     const output_body = document.querySelector('#Output p');
 
     try {
-        const response = await fetch('http://localhost:8000/orchestration/json/', {
+        const response = await fetch('http://localhost:8000/orchestration/send-subinterface/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -25,9 +31,14 @@ async function sendJsonData(){
             body: JSON.stringify(getData()),
         });
 
-        const data = await response.json();
-        console.log('Réponse du serveur:', data);
-        output_body.textContent = data.data || "Aucune réponse.";
+        const result = await response.json();
+        console.log('Réponse du serveur:', result);
+
+        if (result.error) {
+            output_body.textContent = result.error || "Erreur lors de l'exécution.";
+        } else {
+            output_body.textContent = result.message || "Action réussie.";
+        }
 
     } catch (error) {
         console.error('Erreur:', error);
@@ -59,6 +70,10 @@ function getData() {
             mode = "netconf";
         }
     }
+    
+    if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action || !mode) {
+        console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action, mode });
+    }
 
     const JsonData = {
         interfaceName: interfaceName,
@@ -68,10 +83,6 @@ function getData() {
         action: action,
         mode : mode,
     };
-    
-    if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action || !mode) {
-        console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action, mode });
-    }
     
     return JsonData;
 }
@@ -167,9 +178,3 @@ document.addEventListener('DOMContentLoaded', loadDynamicData);
 //eviter les majuscules avec l'id
 
 //Connexion du back avec le front 
-
-fetch("http://127.0.0.1:8000/orchestration/api/routers/")
-    .then(response => response.json())
-    .then(data => console.log("Données reçues :", data))
-    .catch(error => console.error("Erreur de connexion avec Django:", error));
-

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect 
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
 from django.contrib.auth.decorators import login_required
@@ -97,10 +97,12 @@ def get_dynamic_output(request):
 def manage_interface(request):
     """API pour créer, modifier ou supprimer une interface via NETCONF."""
     if request.method == "POST":
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError as e:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-
-#formulaire django
+#formulaire django : extraction des champs
         interface_name = data.get("interface")
         ip = data.get("ip")
         mask = data.get("mask")
@@ -112,8 +114,6 @@ def manage_interface(request):
             if not validate_ip_and_mask(ip, mask):
                 return JsonResponse({"error": "Adresse IP ou masque non valide"}, status=400)
             
-
-
         # Récupérer le routeur à partir de la base de données
         try:
             router = Router.objects.get(ip=router_ip)  # Récupérer le routeur correspondant à l'IP
@@ -127,17 +127,79 @@ def manage_interface(request):
         #mettre en anglais les actions (gérer le select)
         if action == "Ajouter":
             response = client.create_or_update_interface(interface_name, ip, mask, operation="merge")
+            new_interface = Interface.objects.create(
+                router=router,
+                name=interface_name,
+                ip_address=ip,
+                subnet_mask=mask,
+                status="active"  # Ajoute le statut par défaut "active"
+            )
+            new_interface.save()
         elif action == "Modifier":
             response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
+            try:
+                interface = Interface.objects.get(router=router, name=interface_name)
+                interface.ip_address = ip
+                interface.subnet_mask = mask
+                interface.save()
+            except Interface.DoesNotExist:
+                return JsonResponse({"error": "Interface non trouvée"}, status=404)
         elif action == "Supprimer":
             response = client.delete_interface(interface_name)
+            try:
+                interface = Interface.objects.get(router=router, name=interface_name)
+                interface.delete()
+            except Interface.DoesNotExist:
+                return JsonResponse({"error": "Interface non trouvée"}, status=404)
+
         else:
             return JsonResponse({"error": "Action non valide"}, status=400)
+        
+        # Enregistrer l'action dans les logs
+        Log.objects.create(
+            router=router,
+            action=action,
+            user=request.user  # Enregistre l'utilisateur connecté qui a effectué l'action
+        )
 
         return JsonResponse({"status": "success", "response": response})
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
+
+def orchestration_json(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)  # Charger les données JSON envoyées
+
+            # Extraire les informations
+            interface_name = data.get('interfaceName')
+            ip_address = data.get('ipAddress')
+            subnet_mask = data.get('subnetMask')
+            sub_interface = data.get('subInterface')
+            action = data.get('action')
+            mode = data.get('mode')
+
+            # Vérifier si toutes les données nécessaires sont présentes
+            if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
+                return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
+
+            # Enregistrer l'interface dans la base de données
+            config = Interface.objects.create(
+                name=interface_name,
+                ip_address=ip_address,
+                subnet_mask=subnet_mask,
+                sub_interface=sub_interface,
+                status=action,
+                mode=mode
+            )
+
+            return JsonResponse({'message': 'Configuration enregistrée', 'id': config.id}, status=201)
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class modifySubInterface(View):
@@ -167,28 +229,44 @@ class modifySubInterface(View):
             return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
 
         try:
-            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
-            return JsonResponse({"data": output})
+            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode) 
+            # Enregistrer les données en base (même après l'orchestration)
+            router_ip = data.get('routerIp')  
+            router = Router.objects.get(ip_address=router_ip)
+
+            # Enregistrer ou mettre à jour l'interface
+            if action == "create" or action == "update":
+                config = Interface.objects.create(
+                    router=router,
+                    name=interface_name,
+                    ip_address=ip_address,
+                    subnet_mask=subnet_mask,
+                    status="active",  # Par défaut, on met "active"
+                    mode=mode
+                )
+            elif action == "delete":
+                try:
+                    # Supprimer l'interface
+                    interface = Interface.objects.get(router=router, name=interface_name)
+                    interface.delete()
+                except Interface.DoesNotExist:
+                    return JsonResponse({'error': 'Interface non trouvée'}, status=404)
+                
+            # Créer un log pour l'action effectuée
+            Log.objects.create(
+                router=router,
+                action=action,
+                user=request.user  # Enregistre l'utilisateur connecté qui a effectué l'action
+            )
+
+            # Retourner la réponse de l'orchestration ou de la base de données
+            return JsonResponse({"data": output, "message": "Configuration traitée avec succès."}, status=201)
+
         except Exception as e:
             # Capture l'exception et renvoie les détails
             return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
-    
-        try:
-            # **Enregistrer les données en base**
-            config = Interface.objects.create(
-                name=interface_name,
-                ip_address=ip_address,
-                subnet_mask=subnet_mask,
-                sub_interface=sub_interface,
-                status=action,
-                mode=mode
-            )
-            
-            return JsonResponse({'message': 'Configuration enregistrée', 'id': config.id}, status=201)
-            return JsonResponse({"error": f"Erreur: {str(e)}"}, status=500)
 
-        except Exception as e:
-            return JsonResponse({'error': f'Erreur lors de l’enregistrement: {str(e)}'}, status=500)
+
         
     def get(self, request, *args, **kwargs):
         # Récupérer les paramètres de la requête GET
@@ -235,7 +313,7 @@ class modifySubInterface(View):
         except Exception as e:
             return JsonResponse({'error': f'Erreur lors de l’enregistrement: {str(e)}'}, status=500)
         
-@csrf_exempt
+@csrf_exempt # Désactive la protection CSRF (à utiliser avec précaution, surtout si tu ne passes pas de token CSRF)
 
 @api_view(['GET', 'POST']) 
 def my_view(request):
