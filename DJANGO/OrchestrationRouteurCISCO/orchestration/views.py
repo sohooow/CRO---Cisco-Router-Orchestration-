@@ -229,39 +229,8 @@ class modifySubInterface(View):
             return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
 
         try:
-            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode) 
-            # Enregistrer les données en base (même après l'orchestration)
-            router_ip = data.get('routerIp')  
-            router = Router.objects.get(ip_address=router_ip)
-
-            # Enregistrer ou mettre à jour l'interface
-            if action == "create" or action == "update":
-                config = Interface.objects.create(
-                    router=router,
-                    name=interface_name,
-                    ip_address=ip_address,
-                    subnet_mask=subnet_mask,
-                    status="active",  # Par défaut, on met "active"
-                    mode=mode
-                )
-            elif action == "delete":
-                try:
-                    # Supprimer l'interface
-                    interface = Interface.objects.get(router=router, name=interface_name)
-                    interface.delete()
-                except Interface.DoesNotExist:
-                    return JsonResponse({'error': 'Interface non trouvée'}, status=404)
-                
-            # Créer un log pour l'action effectuée
-            Log.objects.create(
-                router=router,
-                action=action,
-                user=request.user  # Enregistre l'utilisateur connecté qui a effectué l'action
-            )
-
-            # Retourner la réponse de l'orchestration ou de la base de données
-            return JsonResponse({"data": output, "message": "Configuration traitée avec succès."}, status=201)
-
+            output = ssh_tool.sendConfig(interface_name, ip_address, subnet_mask, sub_interface, action, mode)         
+            return JsonResponse({"data": output})
         except Exception as e:
             # Capture l'exception et renvoie les détails
             return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
