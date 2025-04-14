@@ -12,6 +12,7 @@ import json
 from .netconf_client import NetconfClient  # le script NETCONF
 import ipaddress
 import json
+import re
 import sys
 import os
 from rest_framework import viewsets
@@ -20,6 +21,7 @@ from rest_framework.response import Response
 from .models import Router, User, Interface, Log
 from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
 import logging
+import ssh_tool # Importer ssh_tool.py depuis le répertoire parent
 
 #@csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
 #def json_view(request):
@@ -32,9 +34,6 @@ logger = logging.getLogger(__name__)
 
 # Ajouter le répertoire parent de 'orchestration' au sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Importer ssh_tool.py depuis le répertoire parent
-import ssh_tool
 
 
 def auth(request):
@@ -135,20 +134,23 @@ def manage_interface(request):
                 status="active"  # Ajoute le statut par défaut "active"
             )
             new_interface.save()
+            response = client.create_or_update_interface(interface_name, ip, mask, operation="merge")
+
         elif action == "Modifier":
-            response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
+
             try:
                 interface = Interface.objects.get(router=router, name=interface_name)
                 interface.ip_address = ip
                 interface.subnet_mask = mask
                 interface.save()
+                response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
             except Interface.DoesNotExist:
                 return JsonResponse({"error": "Interface non trouvée"}, status=404)
         elif action == "Supprimer":
-            response = client.delete_interface(interface_name)
             try:
                 interface = Interface.objects.get(router=router, name=interface_name)
                 interface.delete()
+                response = client.delete_interface(interface_name)
             except Interface.DoesNotExist:
                 return JsonResponse({"error": "Interface non trouvée"}, status=404)
 
@@ -165,6 +167,127 @@ def manage_interface(request):
         return JsonResponse({"status": "success", "response": response})
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+##A revoir : début 
+
+def get_router_data_and_save_netconf(request):
+    """Récupère les données d'un routeur (exemple d'interface) et les sauvegarde dans la base de données."""
+    if request.method == 'POST':
+        try:
+            router_ip = request.POST.get('router_ip')
+
+            if not router_ip:
+                return JsonResponse({"error": "L'IP du routeur est requise"}, status=400)
+            router = Router.objects.filter(ip=router_ip).first()
+
+            if not router:
+                return JsonResponse({"error": "Routeur introuvable dans la base de données"}, status=404)
+            client = NetconfClient(router.ip, router.username, router.password)
+            client.connect()
+            interfaces = client.get_interfaces_details()
+            if not interfaces:
+                return JsonResponse({"error": "Aucune donnée d'interface trouvée"}, status=500)
+
+            for interface in interfaces:
+                interface_name = interface.get('interface')
+                ip_address = interface.get('ip_address')
+                subnet_mask = interface.get('subnet_mask')
+                status = interface.get('status', 'inactive')
+
+    
+                Interface.objects.create(
+                    router=router,
+                    name=interface_name,
+                    ip_address=ip_address,
+                    subnet_mask=subnet_mask,
+                    status=status
+                )
+
+            return JsonResponse({"status": "success", "message": "Interfaces récupérées et sauvegardées"})
+        
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des données du routeur: {str(e)}")
+            return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
+
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+def parse_cli_output(output):
+    """
+    Cette fonction prend en entrée la sortie d'une commande CLI et en extrait
+    les informations pertinentes sur les interfaces réseau du routeur.
+    Elle retourne une liste de dictionnaires avec le nom de l'interface, l'adresse IP, etc.
+    """
+    # Expression régulière pour extraire les informations
+    pattern = r"(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)"
+    
+    # Trouver toutes les correspondances
+    matches = re.findall(pattern, output)
+    
+    # Transformer chaque ligne en un dictionnaire
+    interfaces = []
+    for match in matches:
+        interface = {
+            "name": match[0],  
+            "ip_address": match[1],  
+            "subnet_mask": match[2],  
+            "status": match[4],  
+        }
+        interfaces.append(interface)
+    
+    return interfaces
+
+
+
+def get_router_data_and_save(request):
+    """
+    Se connecte à un routeur via SSH pour récupérer les informations des interfaces réseau,
+    puis enregistre ces données dans la base de données.
+    """
+    if request.method == 'POST':
+        try:
+            router_ip = request.POST.get('router_ip')
+
+            if not router_ip:
+                return JsonResponse({"error": "L'IP du routeur est requise"}, status=400)
+
+            router = Router.objects.filter(ip=router_ip).first()
+            if not router:
+                return JsonResponse({"error": "Routeur introuvable dans la base de données"}, status=404)
+
+            ssh_client = ssh_tool.SSHClient(router.ip, router.username, router.password)
+            output = ssh_client.execute_command("show ip interface brief")  
+
+            if not output:
+                return JsonResponse({"error": "Aucune donnée d'interface trouvée"}, status=500)
+
+            interfaces = parse_cli_output(output)  # Tu devras créer cette fonction pour parser la sortie CLI
+
+            if not interfaces:
+                return JsonResponse({"error": "Aucune interface trouvée dans la sortie CLI"}, status=500)
+
+            for interface in interfaces:
+                interface_name = interface.get('name')
+                ip_address = interface.get('ip_address')
+                subnet_mask = interface.get('subnet_mask', '255.255.255.0')  # Valeur par défaut si non fournie
+                status = interface.get('status', 'inactive')
+
+                Interface.objects.create(
+                    router=router,
+                    name=interface_name,
+                    ip_address=ip_address,
+                    subnet_mask=subnet_mask,
+                    status=status
+                )
+
+            return JsonResponse({"status": "success", "message": "Interfaces récupérées et sauvegardées"})
+
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des données du routeur: {str(e)}")
+            return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
+
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+##fin 
 
 
 def orchestration_json(request):
