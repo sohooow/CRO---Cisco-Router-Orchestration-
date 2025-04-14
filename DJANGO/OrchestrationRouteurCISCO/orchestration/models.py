@@ -21,6 +21,9 @@ class Interface(models.Model) :
     subnet_mask = models.CharField(max_length=39)
     status  = models.CharField(max_length=100, choices=[('active','Active'),('inactive', 'Inactive')])
 
+    def __str__(self):
+        return f"{self.name} ({self.ip_address} / {self.subnet_mask})"
+
 
 class Log(models.Model) : 
     router = models.ForeignKey('Router', on_delete=models.CASCADE)
