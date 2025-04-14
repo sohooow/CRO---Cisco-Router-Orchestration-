@@ -32,7 +32,6 @@
                 hx-swap="innerHTML">
             Rafraîchir la liste des interfaces
         </button>
-
     </div>
     
     <div class="container">
@@ -44,14 +43,14 @@
                     
                     <!--Data Section-->
                     <div id="dataSection" class="command-container" style="display: block;">
-                        <form   id="cliForm"       
-                                hx-post="/orchestration/send-subinterface/" 
-                                hx-trigger="submit" 
-                                hx-target="#Resultat" 
-                                hx-swap="outerHTML"
-                                hx-headers='{"Content-Type": "application/json"}'
-                                hx-ext="json-enc"
-                                onsubmit="console.log(JSON.stringify(Object.fromEntries(new FormData(this))))"
+                        <form id="cliForm"       
+                            hx-post="/orchestration/send-subinterface/" 
+                            hx-trigger="submit" 
+                            hx-target="#Resultat" 
+                            hx-swap="innerHTML"
+                            hx-headers='{"Content-Type": "application/json"}'
+                            hx-ext="json-enc"
+                            onsubmit="console.log(JSON.stringify(Object.fromEntries(new FormData(this))))"
                         >                                
 
                             {% csrf_token %}
@@ -114,7 +113,7 @@
                                 <th>Status</th>
                                 <th>Protocol</th>
                             </tr>
-                            <!-- Le spinner de chargement sera inséré ici temporairement -->
+                            <!-- Spinner -->
                             <tr id="loadingRow" style="display: none;">
                                 <td colspan="4" class="text-center">
                                     <div class="spinner-border" role="status">
@@ -123,10 +122,11 @@
                                 </td>
                             </tr>
                         </thead>
-                        <tbody  hx-get="/orchestration/dynamic-output/" 
-                                hx-trigger="load" 
-                                hx-target="this" 
-                                hx-swap="innerHTML">
+                        <tbody id="interfaceBody"
+                            hx-get="/orchestration/dynamic-output/" 
+                            hx-trigger="load" 
+                            hx-target="this" 
+                            hx-swap="innerHTML">
                             <!-- Les lignes seront remplacées dynamiquement par HTMX -->
                         </tbody>
                     </table>
@@ -138,15 +138,28 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
     <script>
-        // Afficher le spinner avant la requête
+        // Montre le spinner pour toute requête
         document.body.addEventListener('htmx:beforeRequest', function() {
             document.getElementById('loadingRow').style.display = 'table-row';
         });
-
-        // Masquer le spinner après la requête
-        document.body.addEventListener('htmx:afterRequest', function() {
+    
+        // Ne cache plus le spinner ici (on va le gérer plus bas)
+        // document.body.addEventListener('htmx:afterRequest', ...)
+    
+        // Après soumission du formulaire
+        document.getElementById('cliForm').addEventListener('htmx:afterRequest', function(event) {
+            // Lancer manuellement le GET pour rafraîchir la table
+            htmx.ajax('GET', '/orchestration/dynamic-output/', {
+                target: '#interfaceBody',
+                swap: 'innerHTML'
+            });
+        });
+    
+        // Quand le tableau est mis à jour avec les nouvelles lignes
+        document.getElementById('interfaceBody').addEventListener('htmx:afterSwap', function() {
             document.getElementById('loadingRow').style.display = 'none';
         });
     </script>
+    
 </body>
 </html>
