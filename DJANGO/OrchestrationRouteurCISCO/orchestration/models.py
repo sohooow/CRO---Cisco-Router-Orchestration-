@@ -29,6 +29,23 @@ class Log(models.Model) :
 
 
     def __str__(self):
-        return f"{self.interface_name} - {self.ip_address}"
+        return f"{self.name} - {self.ip_address}"
 
 
+# Configuration model
+class Configuration(models.Model):
+    router = models.ForeignKey(Router, on_delete=models.CASCADE, null=False)
+    interface = models.ForeignKey(Interface, on_delete=models.CASCADE, null=False)
+    config_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.config_type} for {self.router.hostname}"
+
+
+# Log model
+class Log(models.Model):
+    router = models.ForeignKey(Router, on_delete=models.CASCADE, null=False)
+    action = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.router.hostname} - {self.action}"

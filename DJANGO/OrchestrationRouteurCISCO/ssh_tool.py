@@ -120,7 +120,7 @@ def get_interfaces_details():
 
 
 if __name__ == "__main__":
-    output = refresh()
+    output = get_interfaces_details()
     print("\n===== Résultat de la commande =====\n")
     print(output)
 

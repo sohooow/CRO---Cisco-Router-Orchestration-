@@ -125,7 +125,7 @@ def manage_interface(request):
         client.connect()
 
         #mettre en anglais les actions (gérer le select)
-        if action == "Ajouter":
+        if action == "Create":
             response = client.create_or_update_interface(interface_name, ip, mask, operation="merge")
             new_interface = Interface.objects.create(
                 router=router,
@@ -135,7 +135,7 @@ def manage_interface(request):
                 status="active"  # Ajoute le statut par défaut "active"
             )
             new_interface.save()
-        elif action == "Modifier":
+        elif action == "Update":
             response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
             try:
                 interface = Interface.objects.get(router=router, name=interface_name)
@@ -144,7 +144,7 @@ def manage_interface(request):
                 interface.save()
             except Interface.DoesNotExist:
                 return JsonResponse({"error": "Interface non trouvée"}, status=404)
-        elif action == "Supprimer":
+        elif action == "Delete":
             response = client.delete_interface(interface_name)
             try:
                 interface = Interface.objects.get(router=router, name=interface_name)

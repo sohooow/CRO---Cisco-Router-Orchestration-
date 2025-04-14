@@ -96,8 +96,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'orchestration_routeur',
         'USER': 'root',
-        'PASSWORD': '',  # ou 'root' si tu as mis un mot de passe
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'rootpassword',
+        'HOST': 'mysql_db',
         'PORT': '3306',
     }
 }

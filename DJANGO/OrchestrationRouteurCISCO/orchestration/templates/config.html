@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Orchestration CISCO IOS XE</title>
+    <title>CISCO IOS XE Orchestration</title>
     
     {% load static %}
     <!-- Lier le fichier CSS -->
@@ -25,12 +25,12 @@
     
     <!-- Header -->
     <div class="header-container">
-        <h1>Orchestration d'un routeur Cisco</h1>
+        <h1>Orchestrate a CISCO router</h1>
         <button id="refresh" class="btn btn-primary btn-mode" 
                 hx-get="/orchestration/dynamic-output/" 
                 hx-target="#interfaceTable tbody" 
                 hx-swap="innerHTML">
-            Rafraîchir la liste des interfaces
+            Refresh interfaces' list
         </button>
     </div>
     
@@ -39,7 +39,7 @@
             <div class="col-md-6">
                 <!-- Container principal -->
                 <div class="command-container">
-                    <h3 class="text-center mb-4">Gestion des interfaces</h3>
+                    <h3 class="text-center mb-4">Interface management</h3>
                     
                     <!--Data Section-->
                     <div id="dataSection" class="command-container" style="display: block;">
@@ -56,28 +56,28 @@
                             {% csrf_token %}
 
                             <div class="mb-3">
-                                <label for="interfaceName" class="form-label">Nom de l'interface</label>
-                                <input type="text" name="interfaceName" id="interfaceName" class="form-control" placeholder="Exemple : GigabitEthernet0/1" required>
+                                <label for="interfaceName" class="form-label">Interface name</label>
+                                <input type="text" name="interfaceName" id="interfaceName" class="form-control" placeholder="Example : GigabitEthernet0/1" required>
                             </div>
                             <div class="mb-3">
-                                <label for="ipAddress" class="form-label">Adresse IP</label>
-                                <input type="text" name="ipAddress" id="ipAddress" class="form-control" placeholder="Exemple : 192.168.0.1">
+                                <label for="ipAddress" class="form-label">IP Address</label>
+                                <input type="text" name="ipAddress" id="ipAddress" class="form-control" placeholder="Example : 192.168.0.1">
                             </div>
                             <div class="mb-3">
-                                <label for="SubnetMask" class="form-label">Masque de sous-réseau</label>
-                                <input type="text" name="subnetMask" id="subnetMask" class="form-control" placeholder="Exemple : 255.255.255.0">
+                                <label for="SubnetMask" class="form-label">Subnet mask</label>
+                                <input type="text" name="subnetMask" id="subnetMask" class="form-control" placeholder="Example : 255.255.255.0">
                             </div>
                             <div class="mb-3">
-                                <label for="SubInterface" class="form-label">Sous-interface</label>
-                                <input type="text" name="subInterface" id="subInterface" class="form-control" placeholder="Exemple : 2">
+                                <label for="SubInterface" class="form-label">Sub-interface</label>
+                                <input type="text" name="subInterface" id="subInterface" class="form-control" placeholder="Example : 2">
                             </div>
                             
                             <div class="mb-3">
                                 <label for="Action" class="form-label">Action</label>
                                 <select name="action" id="action" class="form-select">
-                                    <option value="1">Ajouter</option>
-                                    <option value="1">Modifier</option>
-                                    <option value="0">Supprimer</option>
+                                    <option value="1">Create</option>
+                                    <option value="1">Update</option>
+                                    <option value="0">Delete</option>
                                 </select>
                             </div>
                             
@@ -93,10 +93,10 @@
                                     NETCONF
                                 </label>
                             </div>
-                            <button type="submit" class="btn btn-primary">Exécuter</button>
+                            <button type="submit" class="btn btn-primary">Send</button>
                         </form>
                         <div class="output" id="Output">
-                            <p id="Resultat">Les résultats de la commande s'afficheront ici...</p>
+                            <p id="Resultat">Output results will be shown here</p>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                             <tr id="loadingRow" style="display: none;">
                                 <td colspan="4" class="text-center">
                                     <div class="spinner-border" role="status">
-                                        <span class="visually-hidden">Chargement...</span>
+                                        <span class="visually-hidden">Loading...</span>
                                     </div>
                                 </td>
                             </tr>
