@@ -92,16 +92,16 @@ WSGI_APPLICATION = 'OrchestrationRouteurCISCO.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-     'default': {
-         'ENGINE': 'django.db.backends.mysql',
-         'NAME': 'orchestration_routeur',
-         'USER': 'root',
-         'PASSWORD': 'rootpassword',
-         'HOST': 'mysql_db',  # Le nom du service Docker pour MySQL
-         'PORT': '3306',
-         # 'OPTIONS': {'charset': 'utf8mb4',}
-     }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'orchestration_routeur',
+        'USER': 'root',
+        'PASSWORD': '',  # ou 'root' si tu as mis un mot de passe
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+    }
 }
+
 
 AUTH_USER_MODEL = 'myapp.User'
 
