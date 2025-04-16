@@ -27,7 +27,7 @@
     <div class="header-container">
         <h1>Orchestrate a CISCO router</h1>
         <button id="refresh" class="btn btn-primary btn-mode" 
-                hx-get="/orchestration/dynamic-output/" 
+                hx-get="/dynamic-output/" 
                 hx-target="#interfaceTable tbody" 
                 hx-swap="innerHTML">
             Refresh interfaces' list
@@ -44,7 +44,7 @@
                     <!--Data Section-->
                     <div id="dataSection" class="command-container" style="display: block;">
                         <form id="cliForm"       
-                            hx-post="/orchestration/send-subinterface/" 
+                            hx-post="/send-subinterface/" 
                             hx-trigger="submit" 
                             hx-target="#Resultat" 
                             hx-swap="innerHTML"
@@ -123,7 +123,7 @@
                             </tr>
                         </thead>
                         <tbody id="interfaceBody"
-                            hx-get="/orchestration/dynamic-output/" 
+                            hx-get="/dynamic-output/" 
                             hx-trigger="load" 
                             hx-target="this" 
                             hx-swap="innerHTML">
@@ -149,7 +149,7 @@
         // Après soumission du formulaire
         document.getElementById('cliForm').addEventListener('htmx:afterRequest', function(event) {
             // Lancer manuellement le GET pour rafraîchir la table
-            htmx.ajax('GET', '/orchestration/dynamic-output/', {
+            htmx.ajax('GET', '/dynamic-output/', {
                 target: '#interfaceBody',
                 swap: 'innerHTML'
             });
