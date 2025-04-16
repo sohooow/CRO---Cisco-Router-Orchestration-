@@ -2,21 +2,30 @@ services:
   web:
     build: .
     container_name: orchestration
+    # En DEV :
     command: ["python", "manage.py", "runserver", "0.0.0.0:8080"]
+
+    # En PROD :
+    # command: ["gunicorn", "OrchestrationRouteurCISCO.wsgi:application", "--bind", "0.0.0.0:8080"]
+
     ports:
       - "8080:8080"
+    
     depends_on:
       mysql_db:
         condition: service_healthy
+
     volumes:
       - ./orchestration/static:/OrchestrationRouteurCISCO/orchestration/static
+      - ./staticfiles:/OrchestrationRouteurCISCO/staticfiles
+      - ./media:/OrchestrationRouteurCISCO/media
       - ./nginx.conf:/etc/nginx/nginx.conf
+
     environment:
       - MYSQL_HOST=mysql_db
       - MYSQL_PORT=3306
       - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_DATABASE=orchestration_routeur
-
   mysql_db:
     image: mysql:8.0
     container_name: mysql_db
@@ -30,3 +39,15 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./staticfiles:/staticfiles:ro
+      - ./media:/media:ro
