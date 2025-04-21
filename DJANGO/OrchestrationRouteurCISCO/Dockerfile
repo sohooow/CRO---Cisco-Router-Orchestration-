@@ -22,10 +22,18 @@ RUN adduser \
     appuser
 
 # Installer les dépendances système nécessaires pour mysqlclient et autres bibliothèques
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libmariadb-dev gcc build-essential libffi-dev libssl-dev nginx\
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        netcat-openbsd \
+        libmariadb-dev \
+        gcc \
+        build-essential \
+        libffi-dev \
+        libssl-dev \
+        nginx \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
 
 # Copier le fichier requirements.txt dans le conteneur
 COPY requirements.txt /app/
@@ -41,6 +49,10 @@ RUN python3 manage.py collectstatic --noinput || true
 
 # Copier la configuration Nginx dans le conteneur
 #COPY nginx.conf /etc/nginx/nginx.conf
+
+COPY wait-for-mysql.sh /wait-for-mysql.sh
+RUN chmod +x /wait-for-mysql.sh
+
 
 # Passer à l'utilisateur non privilégié
 USER appuser
