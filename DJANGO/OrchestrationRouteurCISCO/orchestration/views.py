@@ -327,7 +327,7 @@ def orchestration_json(request):
 class modifySubInterface(View):
     def post(self, request, *args, **kwargs):
         # Récupérer les données JSON envoyées dans le body de la requête
-        print("Requête POST reçue !")  # Vérifie si la vue est bien appelée
+        print("Requête POST reçue !")  
 
 
         try:
@@ -368,12 +368,6 @@ class modifySubInterface(View):
         action = request.GET.get('action', None)
         mode = request.GET.get('mode', None)
         
-        print(f"Interface Name: {interface_name}")
-        print(f"IP Address: {ip_address}")
-        print(f"Subnet Mask: {subnet_mask}")
-        print(f"Sub-Interface: {sub_interface}")
-        print(f"Action: {action}")
-        print(f"Mode: {mode}")
 
         # Vérification des paramètres (exemple : champs obligatoires)
         if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
@@ -435,3 +429,62 @@ class LogViewSet(viewsets.ModelViewSet) :
 class InterfaceViewSet(viewsets.ModelViewSet) :
     queryset = Interface.objects.all()
     serializer_class = InterfaceSerializer
+
+    @action(detail=False, methods=['post'])
+    def send_subinterface(self, request):
+    # Extraction des données de la requête
+        data = request.data
+
+        # Vérifier si toutes les données nécessaires sont présentes
+        interface_name = data.get('interfaceName')
+        ip_address = data.get('ipAddress')
+        subnet_mask = data.get('subnetMask')
+        sub_interface = data.get('subInterface')
+        action = data.get('action')  # Vérifie si l'action est présente
+        mode = data.get('mode')
+
+        # Validation des données
+        if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
+            return Response({
+                'error': 'Tous les champs doivent être remplis.'
+            }, status=400)
+
+        # Si l'action n'est toujours pas définie, retourner une erreur
+        if action not in ['activate', 'deactivate']:  # Tu peux ajuster cette liste selon les actions autorisées
+            return Response({
+                'error': f"L'action '{action}' n'est pas valide."
+            }, status=400)
+
+        try:
+            # Créer une nouvelle interface
+            router_id = data.get('router')
+            router = Router.objects.get(id=router_id)
+            interface = Interface.objects.create(
+                router=router,
+                name=interface_name,
+                ip_address=ip_address,
+                subnet_mask=subnet_mask,
+                status='active'  # Statut par défaut
+            )
+
+            # Enregistrer l'action dans les logs
+            log = Log.objects.create(
+                router=router,
+                action=f"Ajout de la sous-interface {sub_interface}",
+                user=request.user
+            )
+
+            # Retourner une réponse avec les données créées
+            return Response({
+                'message': 'Sous-interface ajoutée avec succès',
+                'interface': InterfaceSerializer(interface).data
+            })
+
+        except Router.DoesNotExist:
+            return Response({
+                'error': 'Le routeur spécifié n\'existe pas.'
+            }, status=404)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=500)
