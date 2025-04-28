@@ -23,6 +23,9 @@ from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializ
 import logging
 import ssh_tool # Importer ssh_tool.py depuis le répertoire parent
 
+
+
+
 #@csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
 #def json_view(request):
 #   if request.method == "POST":
@@ -90,82 +93,51 @@ def get_dynamic_output(request):
         )
     
 
-# API NETCONF - Création, modification, suppression d'une interface
+from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 
-#@login_required  # Ajouter ce décorateur pour limiter l'accès aux utilisateurs authentifiés
-def manage_interface(request):
-    """API pour créer, modifier ou supprimer une interface via NETCONF."""
-    if request.method == "POST":
+def netconf_action(request):
+    if request.method == 'POST':
+        # 1. Récupérer les données du formulaire
+        interface_name = request.POST.get('interface_name')
+        ip_address = request.POST.get('ip_address')
+        subnet_mask = request.POST.get('subnet_mask')
+        sub_interface = request.POST.get('sub_interface')
+        action = request.POST.get('action')
+
+        # 2. Connexion NETCONF
+        client = NetconfClient()
+        mgr = client.connect()
+
+        if not mgr:
+            return render(request, 'error.html', {'error': 'Connexion NETCONF impossible'})
+
+        response = None
         try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError as e:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+            # 3. Effectuer l'action demandée
+            if action in ['Create', 'Update']:
+                full_interface_name = f"{interface_name}.{sub_interface}" if sub_interface else interface_name
+                response = client.create_or_update_interface(
+                    interface_name=full_interface_name,
+                    vlan_id=sub_interface or '1',  # par défaut 1 si vide
+                    ip=ip_address,
+                    mask=subnet_mask
+                )
+            elif action == 'Delete':
+                full_interface_name = f"{interface_name}.{sub_interface}" if sub_interface else interface_name
+                response = client.delete_interface(
+                    interface_name=full_interface_name
+                )
+            else:
+                return render(request, 'error.html', {'error': 'Action inconnue'})
 
-#formulaire django : extraction des champs
-        interface_name = data.get("interface")
-        ip = data.get("ip")
-        mask = data.get("mask")
-        action = data.get("action")  # "create", "update" ou "delete"
-        router_ip = data.get("router_ip")  # L'IP du routeur (nécessite d'être fourni dans la requête)
+        finally:
+            client.disconnect()
 
-        # Valider l'IP et le masque
-        if ip and mask:
-            if not validate_ip_and_mask(ip, mask):
-                return JsonResponse({"error": "Adresse IP ou masque non valide"}, status=400)
-            
-        # Récupérer le routeur à partir de la base de données
-        try:
-            router = Router.objects.get(ip=router_ip)  # Récupérer le routeur correspondant à l'IP
-        except Router.DoesNotExist:
-            return JsonResponse({"error": "Routeur non trouvé"}, status=404)
+        return render(request, 'success.html', {'response': response})
 
-        # Connexion NETCONF avec les informations récupérées de la base de données
-        client = NetconfClient(router.ip, router.username, router.password)
-        client.connect()
-
-        #mettre en anglais les actions (gérer le select)
-        if action == "Create":
-            response = client.create_or_update_interface(interface_name, ip, mask, operation="merge")
-            new_interface = Interface.objects.create(
-                router=router,
-                name=interface_name,
-                ip_address=ip,
-                subnet_mask=mask,
-                status="active"  # Ajoute le statut par défaut "active"
-            )
-            new_interface.save()
-        elif action == "Update":
-            response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
-            try:
-                interface = Interface.objects.get(router=router, name=interface_name)
-                interface.ip_address = ip
-                interface.subnet_mask = mask
-                interface.save()
-                response = client.create_or_update_interface(interface_name, ip, mask, operation="replace")
-            except Interface.DoesNotExist:
-                return JsonResponse({"error": "Interface non trouvée"}, status=404)
-        elif action == "Delete":
-            response = client.delete_interface(interface_name)
-            try:
-                interface = Interface.objects.get(router=router, name=interface_name)
-                interface.delete()
-                response = client.delete_interface(interface_name)
-            except Interface.DoesNotExist:
-                return JsonResponse({"error": "Interface non trouvée"}, status=404)
-
-        else:
-            return JsonResponse({"error": "Action non valide"}, status=400)
-        
-        # Enregistrer l'action dans les logs
-        Log.objects.create(
-            router=router,
-            action=action,
-            user=request.user  # Enregistre l'utilisateur connecté qui a effectué l'action
-        )
-
-        return JsonResponse({"status": "success", "response": response})
-
-    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+    return redirect('home')
 
 ##A revoir : début 
 

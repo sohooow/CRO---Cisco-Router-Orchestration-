@@ -12,7 +12,7 @@ class NetconfClient:
         self.host = os.getenv("NETCONF_HOST")
         self.username = os.getenv("NETCONF_USER")
         self.password = os.getenv("NETCONF_PASS")
-        self.mgr = None  
+        self.mgr = None
 
     def connect(self):
         """Établit la connexion NETCONF."""
@@ -37,22 +37,15 @@ class NetconfClient:
         if self.mgr:
             self.mgr.close_session()
             print("Connexion NETCONF fermée.")
-    
+
     def load_rpc(self, file_path, **kwargs):
         """Charge une requête XML depuis un fichier et remplace les valeurs dynamiques."""
         try:
             with open(file_path, "r") as file:
                 rpc = file.read()
 
-            # Générer un message ID unique
             message_id = str(uuid.uuid4())
-
-            # Remplacement des placeholders dans le fichier XML
             rpc = rpc.format(message_id=message_id, **kwargs)
-            
-            # Vérifier si le remplacement a réussi
-            print(f"RPC après remplacement : {rpc}")
-            
             return rpc
         except Exception as e:
             print(f"Erreur lors du chargement du fichier RPC: {e}")
@@ -87,30 +80,89 @@ class NetconfClient:
 
     def create_or_update_interface(self, interface_name, vlan_id, ip, mask, operation="merge"):
         """Crée ou met à jour une interface avec une adresse IP (modèle Cisco IOS-XE)."""
-        response = self.send_rpc("create_update_interface_native.xml", interface_name=interface_name, vlan_id=vlan_id, ip=ip, mask=mask, operation=operation)
+        response = self.send_rpc(
+            "create_update_interface_native.xml",
+            interface_name=interface_name,
+            vlan_id=vlan_id,
+            ip=ip,
+            mask=mask,
+            operation=operation
+        )
         if response:
-            # Après la création ou mise à jour, effectuer un commit
             self.commit_changes()
         return response
 
     def delete_interface(self, interface_name):
         """Supprime une interface (modèle Cisco IOS-XE)."""
-        response = self.send_rpc("delete_interface_native.xml", interface_name=interface_name)
+        response = self.send_rpc(
+            "delete_interface_native.xml",
+            interface_name=interface_name
+        )
         if response:
-            # Après la suppression, effectuer un commit
             self.commit_changes()
         return response
 
-if __name__ == "__main__":
-    client = NetconfClient()
-    
-    if client.connect():
-        # Exemple de création ou mise à jour d'interface
-        response = client.create_or_update_interface(interface_name="GigabitEthernet1.5", vlan_id=5, ip="172.16.10.11", mask="255.255.255.0", operation="create")
-        print("Réponse RPC création ou mise à jour :", response)
+    def generate_modify_interface_rpc(self, interface_name, new_interface_name=None, ip_address=None, subnet_mask=None, description=None):
+        """Génère dynamiquement un RPC XML pour modifier une interface existante."""
+        config_parts = []
 
-        # Exemple de suppression d'interface
-        response_delete = client.delete_interface(interface_name="GigabitEthernet1.5")
-        print("Réponse RPC suppression :", response_delete)
+        if new_interface_name:
+            config_parts.append(f"<name>{new_interface_name}</name>")
+        else:
+            config_parts.append(f"<name>{interface_name}</name>")
 
-        client.disconnect()
+        if description:
+            config_parts.append(f"<description>{description}</description>")
+
+        if ip_address and subnet_mask:
+            config_parts.append(f"""
+            <ip>
+              <address>
+                <primary>
+                  <address>{ip_address}</address>
+                  <mask>{subnet_mask}</mask>
+                </primary>
+              </address>
+            </ip>""")
+
+        if not config_parts:
+            raise ValueError("Aucune information fournie pour modifier l'interface.")
+
+        config_body = "\n".join(config_parts)
+        message_id = str(uuid.uuid4())
+
+        rpc = f"""<rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="{message_id}">
+  <edit-config>
+    <target>
+      <candidate/>
+    </target>
+    <config>
+      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+        <interface>
+          <GigabitEthernet>
+            {config_body}
+          </GigabitEthernet>
+        </interface>
+      </native>
+    </config>
+  </edit-config>
+</rpc>"""
+        return rpc
+
+    def modify_interface(self, interface_name, new_interface_name=None, ip_address=None, subnet_mask=None, description=None):
+        """Modifie dynamiquement les attributs d'une interface."""
+        try:
+            rpc = self.generate_modify_interface_rpc(
+                interface_name=interface_name,
+                new_interface_name=new_interface_name,
+                ip_address=ip_address,
+                subnet_mask=subnet_mask,
+                description=description
+            )
+            rpc_element = to_ele(rpc)
+            response = self.mgr.dispatch(rpc_element)
+            self.commit_changes()
+            return response.xml
+        except Exception as e:
+            print(f"Erreur lors de la modification de l'interface : {e}")
+            return None
