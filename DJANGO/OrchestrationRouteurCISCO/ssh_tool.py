@@ -94,11 +94,9 @@ def sendConfig(given_interface_name, given_ip_address, given_subnet_mask, given_
 
 def get_interfaces_details():
 
-<<<<<<< Updated upstream
     command = "show ip interface brief"
-=======
     config_commands = ["show netconf-yang capabilities"]  # Exemple de commande Cisco à exécuter
->>>>>>> Stashed changes
+
   
     try:
         # Connexion et exécution de la commande
