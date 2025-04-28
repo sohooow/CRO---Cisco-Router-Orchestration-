@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect 
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.utils.decorators import method_decorator
@@ -27,10 +27,15 @@ import ssh_tool # Importer ssh_tool.py depuis le répertoire parent
 
 
 #@csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
-#def json_view(request):
-#   if request.method == "POST":
-#       return JsonResponse({"message": "Requête POST reçue avec succès !"})
-#   return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+# Vue simple pour tester les méthodes GET et POST
+@api_view(['GET', 'POST']) 
+def my_view(request):
+    if request.method == 'GET':
+        return Response({"message": "GET method is allowed now."})
+    elif request.method == 'POST':
+        return Response({"message": "Data received"}, status=201)
+
 
 # Créez un logger
 logger = logging.getLogger(__name__)
@@ -38,12 +43,32 @@ logger = logging.getLogger(__name__)
 # Ajouter le répertoire parent de 'orchestration' au sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-
+#Fonction d'authentification
 def auth(request):
     template = loader.get_template("auth.html")
     return HttpResponse(template.render())
 
+#Décorateur pour vérifier si l'utilisateur est un admin
+def is_admin(user):
+    return user.role == 'admin'
 
+#Vue protégée par un décorateur, accessible uniquement aux administrateurs   
+@user_passes_test(is_admin)
+def add_router(request):
+    if request.method == "POST":
+        # Code pour ajouter un routeur : 
+        #1. Récupère les informations du routeur via POST
+        hostname = request.POST.get('hostname')
+        device_type = request.POST.get('device_type')
+        ip_address = request.POST.get('ip_address')
+
+        #2. Crée un nouvel objet routeur dans la base de données
+        Router.objects.create(hostname=hostname, device_type=device_type, ip_address=ip_address)
+        return redirect('router_list')  
+    
+    return render(request, 'add_router.html')
+
+# Fonction pour valider l'adresse IP et le masque de sous-réseau
 def validate_ip_and_mask(ip, mask):
     """Valide l'adresse IP et le masque de sous-réseau."""
     try:
@@ -53,11 +78,13 @@ def validate_ip_and_mask(ip, mask):
         return False
     return True
 
-
+# Vue de configuration, accessible après authentification
 #@login_required                #décommenter @login_required pour sécuriser la page avec l'authentification 
 def config(request):
     return render(request, "config.html")
 
+
+# Récupération dynamique des informations des interfaces via SSH
 def get_dynamic_output(request):
     try:
         # Récupération des données depuis SSH
@@ -139,8 +166,8 @@ def netconf_action(request):
 
     return redirect('home')
 
-##A revoir : début 
 
+# Récupère et enregistre les données d'un routeur via NETCONF
 def get_router_data_and_save_netconf(request):
     """Récupère les données d'un routeur (exemple d'interface) et les sauvegarde dans la base de données."""
     if request.method == 'POST':
@@ -182,6 +209,7 @@ def get_router_data_and_save_netconf(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
+# Fonction pour analyser la sortie d'une commande CLI et extraire les informations des interfaces
 def parse_cli_output(output):
     """
     Cette fonction prend en entrée la sortie d'une commande CLI et en extrait
@@ -208,7 +236,7 @@ def parse_cli_output(output):
     return interfaces
 
 
-
+# Récupère les données d'un routeur via SSH et les sauvegarde dans la base de données
 def get_router_data_and_save(request):
     """
     Se connecte à un routeur via SSH pour récupérer les informations des interfaces réseau,
@@ -258,9 +286,7 @@ def get_router_data_and_save(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
-##fin 
-
-
+# Vue pour gérer l'enregistrement de la configuration des interfaces réseau via JSON
 def orchestration_json(request):
     if request.method == 'POST':
         try:
@@ -295,6 +321,7 @@ def orchestration_json(request):
     
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
+# Vue basée sur la classe View pour modifier la sous-interface
 @method_decorator(csrf_exempt, name='dispatch')
 class modifySubInterface(View):
     def post(self, request, *args, **kwargs):
@@ -369,22 +396,14 @@ class modifySubInterface(View):
             return JsonResponse({'message': 'Configuration enregistrée', 'id': config.id}, status=201)
         except Exception as e:
             return JsonResponse({'error': f'Erreur lors de l’enregistrement: {str(e)}'}, status=500)
-        
-@csrf_exempt # Désactive la protection CSRF (à utiliser avec précaution, surtout si tu ne passes pas de token CSRF)
 
-@api_view(['GET', 'POST']) 
-def my_view(request):
-    if request.method == 'GET':
-        return Response({"message": "GET method is allowed now."})
-    elif request.method == 'POST':
-        return Response({"message": "Data received"}, status=201)
-    
 
+# Ajout des vues pour manipuler les modèles dans la base de données via l'API REST
+
+# Vue personnalisée de login héritée de LoginView pour rediriger les utilisateurs authentifiés
 class MyLoginView(LoginView):
     template_name = 'registration/login.html'
     redirect_authenticated_user = True
-
-#Ajout des vues pour la base de données 
 
 class RouterViewSet(viewsets.ModelViewSet):
     queryset = Router.objects.all()
@@ -401,62 +420,3 @@ class LogViewSet(viewsets.ModelViewSet) :
 class InterfaceViewSet(viewsets.ModelViewSet) :
     queryset = Interface.objects.all()
     serializer_class = InterfaceSerializer
-
-    @action(detail=False, methods=['post'])
-    def send_subinterface(self, request):
-    # Extraction des données de la requête
-        data = request.data
-
-        # Vérifier si toutes les données nécessaires sont présentes
-        interface_name = data.get('interfaceName')
-        ip_address = data.get('ipAddress')
-        subnet_mask = data.get('subnetMask')
-        sub_interface = data.get('subInterface')
-        action = data.get('action')  # Vérifie si l'action est présente
-        mode = data.get('mode')
-
-        # Validation des données
-        if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
-            return Response({
-                'error': 'Tous les champs doivent être remplis.'
-            }, status=400)
-
-        # Si l'action n'est toujours pas définie, retourner une erreur
-        if action not in ['activate', 'deactivate']:  # Tu peux ajuster cette liste selon les actions autorisées
-            return Response({
-                'error': f"L'action '{action}' n'est pas valide."
-            }, status=400)
-
-        try:
-            # Créer une nouvelle interface
-            router_id = data.get('router')
-            router = Router.objects.get(id=router_id)
-            interface = Interface.objects.create(
-                router=router,
-                name=interface_name,
-                ip_address=ip_address,
-                subnet_mask=subnet_mask,
-                status='active'  # Statut par défaut
-            )
-
-            # Enregistrer l'action dans les logs
-            log = Log.objects.create(
-                router=router,
-                action=f"Ajout de la sous-interface {sub_interface}",
-                user=request.user
-            )
-
-            # Retourner une réponse avec les données créées
-            return Response({
-                'message': 'Sous-interface ajoutée avec succès',
-                'interface': InterfaceSerializer(interface).data
-            })
-
-        except Router.DoesNotExist:
-            return Response({
-                'error': 'Le routeur spécifié n\'existe pas.'
-            }, status=404)
-        except Exception as e:
-            return Response({
-                'error': str(e)
-            }, status=500)
