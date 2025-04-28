@@ -26,6 +26,12 @@ urlpatterns = [
     path('netconf-action/', views.netconf_action, name='netconf_action'),
 ]
 
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
+
 # Ajout du support des fichiers statiques
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
 

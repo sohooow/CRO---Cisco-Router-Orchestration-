@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-ap#(^d&1e7r9%*bxw02@qd*hg7^zcik@o1++$k1g*d*5ph@1m^
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web']
 
 
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_extensions', 
     'rest_framework',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -61,6 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 ]
 
@@ -164,3 +166,6 @@ LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
 LOGIN_URL = '/login/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
+INTERNAL_IPS = [
+    '127.0.0.1',  # Localhost
+]
