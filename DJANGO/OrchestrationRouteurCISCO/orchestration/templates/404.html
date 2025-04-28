@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Page non trouvée</title>
+    {% load static %}
+    <!-- Lier le fichier CSS -->
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+</head>
+<body class="error-page error-404">
+    <div class="container">
+        <h1>Erreur 404</h1>
+        <p>La page que vous cherchez n'existe pas.</p>
+        <a href="/">Retour à l'accueil</a>
+    </div>
+</body>
+</html>

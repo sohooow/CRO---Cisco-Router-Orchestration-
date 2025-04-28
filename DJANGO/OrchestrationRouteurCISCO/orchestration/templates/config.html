@@ -32,6 +32,14 @@
                 hx-swap="innerHTML">
             Refresh interfaces' list
         </button>
+        <button id="logout" class="btn btn-danger btn-mode"
+                hx-post="/logout/"
+                hx-target="body"
+                hx-swap="innerHTML"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+            Logout
+        </button>
+
     </div>
     
     <div class="container">

@@ -32,16 +32,8 @@ SECRET_KEY = 'django-insecure-ap#(^d&1e7r9%*bxw02@qd*hg7^zcik@o1++$k1g*d*5ph@1m^
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-
-
-
-
-
-
-
-ALLOWED_HOSTS = []
+DEBUG = False
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web']
 
 
 # Application definition
@@ -116,7 +108,7 @@ DATABASES = {
 }
 
 
-AUTH_USER_MODEL = 'myapp.User'
+AUTH_USER_MODEL = 'orchestration.User'
 
 
 # Password validation
