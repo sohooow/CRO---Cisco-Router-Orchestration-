@@ -1,0 +1,8 @@
+<native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+  <interface>
+    <GigabitEthernet operation="delete">
+      <name>{interface_name}</name>
+    </GigabitEthernet>
+  </interface>
+</native>
+
