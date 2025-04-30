@@ -1,8 +1,10 @@
 import os
-import dotenv
 import uuid
+
+import dotenv
 from ncclient import manager
 from ncclient.xml_ import to_ele
+
 
 class NetconfClient:
     """Client NETCONF sécurisé pour gérer les interfaces d'un routeur Cisco IOS-XE."""
@@ -22,9 +24,9 @@ class NetconfClient:
                 username=self.username,
                 password=self.password,
                 hostkey_verify=False,
-                device_params={'name': 'iosxe'},
+                device_params={"name": "iosxe"},
                 allow_agent=False,
-                look_for_keys=False
+                look_for_keys=False,
             )
             print("Connexion NETCONF établie avec", self.host)
             return self.mgr
@@ -78,7 +80,9 @@ class NetconfClient:
             print(f"Erreur lors du commit des modifications : {e}")
         return None
 
-    def create_or_update_interface(self, interface_name, vlan_id, ip, mask, operation="merge"):
+    def create_or_update_interface(
+        self, interface_name, vlan_id, ip, mask, operation="merge"
+    ):
         """Crée ou met à jour une interface avec une adresse IP (modèle Cisco IOS-XE)."""
         response = self.send_rpc(
             "create_update_interface_native.xml",
@@ -86,7 +90,7 @@ class NetconfClient:
             vlan_id=vlan_id,
             ip=ip,
             mask=mask,
-            operation=operation
+            operation=operation,
         )
         if response:
             self.commit_changes()
@@ -95,14 +99,20 @@ class NetconfClient:
     def delete_interface(self, interface_name):
         """Supprime une interface (modèle Cisco IOS-XE)."""
         response = self.send_rpc(
-            "delete_interface_native.xml",
-            interface_name=interface_name
+            "delete_interface_native.xml", interface_name=interface_name
         )
         if response:
             self.commit_changes()
         return response
 
-    def generate_modify_interface_rpc(self, interface_name, new_interface_name=None, ip_address=None, subnet_mask=None, description=None):
+    def generate_modify_interface_rpc(
+        self,
+        interface_name,
+        new_interface_name=None,
+        ip_address=None,
+        subnet_mask=None,
+        description=None,
+    ):
         """Génère dynamiquement un RPC XML pour modifier une interface existante."""
         config_parts = []
 
@@ -115,7 +125,8 @@ class NetconfClient:
             config_parts.append(f"<description>{description}</description>")
 
         if ip_address and subnet_mask:
-            config_parts.append(f"""
+            config_parts.append(
+                f"""
             <ip>
               <address>
                 <primary>
@@ -123,7 +134,8 @@ class NetconfClient:
                   <mask>{subnet_mask}</mask>
                 </primary>
               </address>
-            </ip>""")
+            </ip>"""
+            )
 
         if not config_parts:
             raise ValueError("Aucune information fournie pour modifier l'interface.")
@@ -149,7 +161,14 @@ class NetconfClient:
 </rpc>"""
         return rpc
 
-    def modify_interface(self, interface_name, new_interface_name=None, ip_address=None, subnet_mask=None, description=None):
+    def modify_interface(
+        self,
+        interface_name,
+        new_interface_name=None,
+        ip_address=None,
+        subnet_mask=None,
+        description=None,
+    ):
         """Modifie dynamiquement les attributs d'une interface."""
         try:
             rpc = self.generate_modify_interface_rpc(
@@ -157,7 +176,7 @@ class NetconfClient:
                 new_interface_name=new_interface_name,
                 ip_address=ip_address,
                 subnet_mask=subnet_mask,
-                description=description
+                description=description,
             )
             rpc_element = to_ele(rpc)
             response = self.mgr.dispatch(rpc_element)

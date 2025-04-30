@@ -28,9 +28,6 @@ SECRET_KEY = 'django-insecure-ap#(^d&1e7r9%*bxw02@qd*hg7^zcik@o1++$k1g*d*5ph@1m^
 
 
 
-
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'web']
@@ -169,3 +166,5 @@ LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 INTERNAL_IPS = [
     '127.0.0.1',  # Localhost
 ]
+
+DEFAULT_ROUTER_IP = "172.16.10.11"

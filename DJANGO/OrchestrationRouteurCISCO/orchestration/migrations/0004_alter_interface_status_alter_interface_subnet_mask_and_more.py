@@ -7,33 +7,42 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('orchestration', '0003_log_user_delete_configuration'),
+        ("orchestration", "0003_log_user_delete_configuration"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='interface',
-            name='status',
-            field=models.CharField(choices=[('active', 'Active'), ('inactive', 'Inactive')], max_length=100),
+            model_name="interface",
+            name="status",
+            field=models.CharField(
+                choices=[("active", "Active"), ("inactive", "Inactive")], max_length=100
+            ),
         ),
         migrations.AlterField(
-            model_name='interface',
-            name='subnet_mask',
+            model_name="interface",
+            name="subnet_mask",
             field=models.CharField(max_length=39),
         ),
         migrations.AlterField(
-            model_name='router',
-            name='ip_address',
-            field=models.GenericIPAddressField(unique='True'),
+            model_name="router",
+            name="ip_address",
+            field=models.GenericIPAddressField(unique="True"),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='password',
-            field=models.CharField(max_length=128, verbose_name='password'),
+            model_name="user",
+            name="password",
+            field=models.CharField(max_length=128, verbose_name="password"),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='username',
-            field=models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='username'),
+            model_name="user",
+            name="username",
+            field=models.CharField(
+                error_messages={"unique": "A user with that username already exists."},
+                help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+                max_length=150,
+                unique=True,
+                validators=[django.contrib.auth.validators.UnicodeUsernameValidator()],
+                verbose_name="username",
+            ),
         ),
     ]
