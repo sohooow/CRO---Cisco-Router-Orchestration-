@@ -1,12 +1,12 @@
-<rpc message-id="103" xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+<rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" message-id="{message_id}">
   <edit-config>
     <target>
-      <running/>
+      <candidate/>
     </target>
-    <config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
+    <config>
       <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
         <interface>
-          <GigabitEthernet xc:operation="delete">
+          <GigabitEthernet>
             <name>{interface_name}</name>
           </GigabitEthernet>
         </interface>
@@ -14,3 +14,4 @@
     </config>
   </edit-config>
 </rpc>
+

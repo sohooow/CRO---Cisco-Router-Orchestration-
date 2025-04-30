@@ -95,6 +95,8 @@ def sendConfig(given_interface_name, given_ip_address, given_subnet_mask, given_
 def get_interfaces_details():
 
     command = "show ip interface brief"
+    config_commands = ["show netconf-yang capabilities"]  # Exemple de commande Cisco à exécuter
+
   
     try:
         # Connexion et exécution de la commande
