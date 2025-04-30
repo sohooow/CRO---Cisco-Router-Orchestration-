@@ -26,7 +26,6 @@ urlpatterns = [
     path('netconf-action/', views.netconf_action, name='netconf_action'),
 ]
 
-] 
 
 # Ajout du support des fichiers statiques
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) 
