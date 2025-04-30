@@ -12,3 +12,6 @@ djangorestframework
 serializers
 django_htmx
 django-debug-toolbar
+black
+isort
+pre-commit
