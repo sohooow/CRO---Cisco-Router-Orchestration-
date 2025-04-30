@@ -8,16 +8,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('orchestration', '0002_remove_router_interface_name_and_more'),
+        ("orchestration", "0002_remove_router_interface_name_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='log',
-            name='user',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL),
+            model_name="log",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.DeleteModel(
-            name='Configuration',
+            name="Configuration",
         ),
     ]
