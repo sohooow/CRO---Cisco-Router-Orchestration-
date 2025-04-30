@@ -4,8 +4,6 @@ ncclient>=0.6.14
 mysqlclient==2.1.1
 django-cors-headers
 ncclient
-celery
-redis
 django_extensions
 python-dotenv
 pymysql
@@ -13,3 +11,4 @@ gunicorn
 djangorestframework
 serializers
 django_htmx
+django-debug-toolbar

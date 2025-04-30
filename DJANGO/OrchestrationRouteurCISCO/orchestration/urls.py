@@ -4,9 +4,7 @@ from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView, LogoutView
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import modifySubInterface, RouterViewSet, InterfaceViewSet, LogViewSet, UserViewSet
-from . import views
-from rest_framework.routers import DefaultRouter
+from .views import ModifySubInterface, RouterViewSet, InterfaceViewSet, LogViewSet, UserViewSet
 
 #Router pour les API REST
 router = DefaultRouter()
@@ -24,7 +22,11 @@ urlpatterns = [
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('netconf-action/', views.netconf_action, name='netconf_action'),
-]
+    #path('manage-interface/', views.manage_interface, name='manage_interface'),
+    path('send-subinterface/', ModifySubInterface.as_view(), name='send_subinterface'),
+    path('delete-router/<str:router_ip>/', views.delete_router, name='delete_router'),
+    path('get-interfaces-and-save/', views.get_interfaces_and_save, name='get_interfaces_and_save'),
+] 
 
 
 # Ajout du support des fichiers statiques

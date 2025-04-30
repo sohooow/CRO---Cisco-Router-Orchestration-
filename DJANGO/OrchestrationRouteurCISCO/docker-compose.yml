@@ -3,7 +3,7 @@ services:
     build: .
     container_name: orchestration
     # En DEV :
-    #command: ["python", "manage.py", "runserver", "0.0.0.0:8080"]
+    #command: ["sh", "-c", "sleep 5 && python manage.py runserver 0.0.0.0:8080"]
     command: ["/wait-for-mysql.sh", "python", "manage.py", "runserver", "0.0.0.0:8080"]
 
 

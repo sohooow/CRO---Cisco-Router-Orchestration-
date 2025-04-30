@@ -16,8 +16,6 @@ class User(AbstractUser) :
         ('normal', 'Normal'),
     ]
     role = models.CharField(max_length=100, choices=ROLE_CHOICES, default='normal')
-    
-
 
 class Interface(models.Model) : 
     router = models.ForeignKey('Router', on_delete=models.CASCADE)
