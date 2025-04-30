@@ -8,8 +8,9 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.test import Client
 from django.http import JsonResponse
+from django.conf import settings
+from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 import json
-from .netconf_client import NetconfClient  # le script NETCONF
 import ipaddress
 import json
 import re
@@ -20,9 +21,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Router, User, Interface, Log
 from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
+from .forms import SubInterfaceForm, RouterForm, InterfaceForm
+
 import logging
 import ssh_tool # Importer ssh_tool.py depuis le répertoire parent
-
 
 
 
@@ -56,17 +58,14 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def add_router(request):
     if request.method == "POST":
-        # Code pour ajouter un routeur : 
-        #1. Récupère les informations du routeur via POST
-        hostname = request.POST.get('hostname')
-        device_type = request.POST.get('device_type')
-        ip_address = request.POST.get('ip_address')
-
-        #2. Crée un nouvel objet routeur dans la base de données
-        Router.objects.create(hostname=hostname, device_type=device_type, ip_address=ip_address)
-        return redirect('router_list')  
+        form = RouterForm(request.post)
+        if form.is_valid():
+            form.save()
+            return redirect('router_list')
+        else : 
+            form = RouterForm()
     
-    return render(request, 'add_router.html')
+    return render(request, 'add_router.html', {'form': form})
 
 # Fonction pour valider l'adresse IP et le masque de sous-réseau
 def validate_ip_and_mask(ip, mask):
@@ -118,11 +117,6 @@ def get_dynamic_output(request):
             f'<tr><td colspan="4" class="text-danger">Erreur: {str(e)}</td></tr>', 
             status=500
         )
-    
-
-from django.shortcuts import render, redirect
-from django.views.decorators.csrf import csrf_exempt
-from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 
 def netconf_action(request):
     if request.method == 'POST':
@@ -207,74 +201,48 @@ def orchestration_json(request):
 @method_decorator(csrf_exempt, name='dispatch')
 class ModifySubInterface(View):
     def post(self, request, *args, **kwargs):
-        try:
-            data = json.loads(request.body)
-            interface_name = data.get('interfaceName')
-            ip_address = data.get('ipAddress')
-            subnet_mask = data.get('subnetMask')
-            sub_interface = data.get('subInterface')
-            action = data.get('action')
-
-            if not all([interface_name, ip_address, subnet_mask, sub_interface, action]):
-                return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
-
-            # Envoie la config au routeur via SSH
-            output = ssh_tool.sendConfig(interface_name, ip_address, subnet_mask, sub_interface, action)
-
-            # Enregistrement dans la BDD
-            Interface.objects.create(
-                name=interface_name,
-                ip_address=ip_address,
-                subnet_mask=subnet_mask,
-                status='active' if action == "Create" else 'updated',
-                router_ip='172.16.10.11',  #attacher au routeur
-            )
-
-            return JsonResponse({"data": output})
-
-        except Exception as e:
-            return JsonResponse({"error": f"Erreur: {str(e)}"}, status=500)
-
-        
-    def get(self, request, *args, **kwargs):
         # Récupérer les paramètres de la requête GET
-        interface_name = request.GET.get('interfaceName', None)
-        ip_address = request.GET.get('ipAddress', None)
-        subnet_mask = request.GET.get('subnetMask', None)
-        sub_interface = request.GET.get('subInterface', None)
-        action = request.GET.get('action', None)
-        mode = request.GET.get('mode', None)
-        
+        interface_name = request.GET.get('interfaceName')
+        ip_address = request.GET.get('ipAddress')
+        subnet_mask = request.GET.get('subnetMask')
+        sub_interface = request.GET.get('subInterface')
+        action = request.GET.get('action')
+        mode = request.GET.get('mode')
 
-        # Vérification des paramètres (exemple : champs obligatoires)
         if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
             return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
+        
+         # 1. Enregistrer en base via formulaire
+        form_data = {
+            'name': interface_name,
+            'ip_address': ip_address,
+            'subnet_mask': subnet_mask,
+            'status': 'active' if action == "Create" else 'updated',
+        }
 
-        # Effectuer des traitements sur les données (exemple : validation IP)
+        form = InterfaceForm(form_data)
+
+        if form.is_valid():
+            interface = form.save(commit=False)
+
+            try:
+                router = Router.objects.get(ip_address="172.16.10.11")
+                interface.router = router
+                interface.save()
+            except Router.DoesNotExist:
+                return JsonResponse({'error': 'Routeur non trouvé'}, status=404)
+        else:
+            return JsonResponse({'error': form.errors}, status=400)
+
+        # 2. Envoyer la config au routeur via SSH
         try:
-            # Appel de la fonction orchestration() pour envoyer les données
-            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)            
-            if output:
-                return JsonResponse({"data": output})
+            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)
+            return JsonResponse({
+                "message": "Interface enregistrée et configuration envoyée au routeur.",
+                "data": output
+            }, status=201)
         except Exception as e:
-            # Capture l'exception et renvoie les détails
-            return JsonResponse({"error": f"Erreur inattendue: {str(e)}"}, status=500)
-
-        # Optionnel : Tu peux récupérer les données et les afficher ou les manipuler
-        # par exemple ici l'enregistrement en base de données comme dans la version POST
-        try:
-            config = Interface.objects.create(
-                name=interface_name,
-                ip_address=ip_address,
-                subnet_mask=subnet_mask,
-                sub_interface=sub_interface,
-                status=action,
-                mode=mode
-            )
-            return JsonResponse({'message': 'Configuration enregistrée', 'id': config.id}, status=201)
-        except Exception as e:
-            return JsonResponse({'error': f'Erreur lors de l’enregistrement: {str(e)}'}, status=500)
-
+            return JsonResponse({'error': f"Erreur SSH : {str(e)}"}, status=500)
 
 
 #Gestion de la base de donnnées
@@ -332,7 +300,7 @@ def get_interfaces_and_save(request):
     if request.method == 'POST':
         try:
             # IP Management du routeur 
-            router_ip = "172.16.10.11"
+            router_ip =settings.DEFAULT_ROUTER_IP
             
             # Cherche le routeur en BDD
             try:
