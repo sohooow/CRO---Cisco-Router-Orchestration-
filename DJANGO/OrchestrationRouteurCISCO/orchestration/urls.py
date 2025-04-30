@@ -21,7 +21,7 @@ urlpatterns = [
     path("config/", views.config, name="config"),
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
-    path('manage-interface/', views.manage_interface, name='manage_interface'),
+    #path('manage-interface/', views.manage_interface, name='manage_interface'),
     path('send-subinterface/', ModifySubInterface.as_view(), name='send_subinterface'),
     path('delete-router/<str:router_ip>/', views.delete_router, name='delete_router'),
     path('get-interfaces-and-save/', views.get_interfaces_and_save, name='get_interfaces_and_save'),
