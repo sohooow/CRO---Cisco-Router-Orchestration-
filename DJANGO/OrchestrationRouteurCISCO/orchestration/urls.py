@@ -30,6 +30,7 @@ urlpatterns = [
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path("logout/", LogoutView.as_view(next_page="/"), name="logout"),
     path("netconf-action/", views.netconf_action, name="netconf_action"),
+    path("send-subinterface/", modifySubInterface.as_view(), name="send_subinterface"),
 ]
 
 if settings.DEBUG:
