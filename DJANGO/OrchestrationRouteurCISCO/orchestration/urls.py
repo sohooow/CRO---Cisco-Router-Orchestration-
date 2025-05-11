@@ -33,12 +33,12 @@ urlpatterns = [
     path("send-subinterface/", modifySubInterface.as_view(), name="send_subinterface"),
 ]
 
+
 if settings.DEBUG:
     import debug_toolbar
-
     urlpatterns += [
-        path("__debug__/", include(debug_toolbar.urls)),
+        path('__debug__/', include(debug_toolbar.urls)),
     ]
-
+    
 # Ajout du support des fichiers statiques
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
