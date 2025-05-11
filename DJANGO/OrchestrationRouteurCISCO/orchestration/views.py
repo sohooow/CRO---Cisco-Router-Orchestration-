@@ -1,38 +1,28 @@
-import ipaddress
-import json
-import logging
-import os
-import re
-import sys
+import ipaddress, json, logging, os, re, sys, ssh_tool
+
 
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
+from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.test import Client
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.test import Client
-from django.http import JsonResponse
 from django.conf import settings
+
 from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
-import json
-import ipaddress
-import json
-import re
-import sys
-import os
+
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 from .models import Router, User, Interface, Log
 from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
-from .forms import SubInterfaceForm, RouterForm, InterfaceForm 
+from .forms import SubInterfaceForm, RouterForm, InterfaceForm, CustomAuthenticationForm
 
-import logging
-import ssh_tool # Importer ssh_tool.py depuis le répertoire parent
 
 
 
@@ -64,6 +54,26 @@ def auth(request):
 def is_admin(user):
     return user.role == "admin"
 
+#authentification des users
+def login_view(request):
+    if request.method == "POST":
+        form = CustomAuthenticationForm(request=request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get("username")
+            password = form.cleaned_data.get("password")
+            user = authenticate(username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect('')  # Rediriger vers une page d'accueil ou une page protégée
+            else:
+                form.add_error(None, "Identifiants incorrects.")
+    else:
+        form = CustomAuthenticationForm()
+
+    return render(request, 'login.html', {'form': form})
+
+
 
 # Vue protégée par un décorateur, accessible uniquement aux administrateurs
 @user_passes_test(is_admin)
@@ -92,7 +102,7 @@ def validate_ip_and_mask(ip, mask):
 
 
 # Vue de configuration, accessible après authentification
-# @login_required                #décommenter @login_required pour sécuriser la page avec l'authentification
+@login_required                #décommenter @login_required pour sécuriser la page avec l'authentification
 def config(request):
     return render(request, "config.html")
 
