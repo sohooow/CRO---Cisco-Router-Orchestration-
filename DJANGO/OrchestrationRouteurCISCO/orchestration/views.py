@@ -5,6 +5,7 @@ import os
 import re
 import sys
 
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.http import HttpResponse, JsonResponse
@@ -28,7 +29,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Router, User, Interface, Log
 from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
-from .forms import SubInterfaceForm, RouterForm, InterfaceForm
+from .forms import SubInterfaceForm, RouterForm, InterfaceForm 
 
 import logging
 import ssh_tool # Importer ssh_tool.py depuis le répertoire parent

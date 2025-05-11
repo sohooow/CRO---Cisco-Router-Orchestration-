@@ -4,15 +4,14 @@ services:
     container_name: orchestration
     # En DEV :
     #command: ["sh", "-c", "sleep 5 && python manage.py runserver 0.0.0.0:8080"]
-    command: ["/wait-for-mysql.sh", "python", "manage.py", "runserver", "0.0.0.0:8080"]
-
+    command: [ "/wait-for-mysql.sh", "python", "manage.py", "runserver", "0.0.0.0:8080" ]
 
     # En PROD :
     # command: ["gunicorn", "OrchestrationRouteurCISCO.wsgi:application", "--bind", "0.0.0.0:8080"]
 
     ports:
       - "8080:8080"
-    
+
     depends_on:
       mysql_db:
         condition: service_healthy
@@ -32,12 +31,12 @@ services:
     image: mysql:8.0
     container_name: mysql_db
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword 
+      MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: orchestration_routeur
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword" ]
       interval: 5s
       timeout: 10s
       retries: 5

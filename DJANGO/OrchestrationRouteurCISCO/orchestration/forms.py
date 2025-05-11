@@ -1,5 +1,5 @@
 from django import forms
-from .models import Router
+from .models import Router, Interface 
 
 class SubInterfaceForm(forms.Form):
     interfaceName = forms.CharField()
@@ -13,3 +13,8 @@ class RouterForm(forms.ModelForm):
     class Meta:
         model = Router
         fields = ['hostname', 'device_type', 'ip_address']  
+
+class InterfaceForm(forms.ModelForm):
+    class Meta:
+        model = Interface
+        fields = ['name', 'ip_address', 'subnet_mask', 'status']
