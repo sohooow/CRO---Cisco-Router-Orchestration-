@@ -1,32 +1,39 @@
-import ipaddress, json, logging, os, re, sys, ssh_tool
+import ipaddress
+import json
+import logging
+import os
+import re
+import sys
 
-
-from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
-from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.test import Client
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.conf import settings
-
-from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
-
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Router, User, Interface, Log
-from .serializersArti import RouterSerializer, UserSerializer, InterfaceSerializer, LogSerializer
-from .forms import SubInterfaceForm, RouterForm, InterfaceForm, CustomAuthenticationForm
+import ssh_tool
 
+from .forms import CustomAuthenticationForm, InterfaceForm, RouterForm, SubInterfaceForm
+from .models import Interface, Log, Router, User
+from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
+from .serializersArti import (
+    InterfaceSerializer,
+    LogSerializer,
+    RouterSerializer,
+    UserSerializer,
+)
 
+# @csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
 
-
-#@csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
 
 # Vue simple pour tester les méthodes GET et POST
 @api_view(["GET", "POST"])
@@ -54,7 +61,8 @@ def auth(request):
 def is_admin(user):
     return user.role == "admin"
 
-#authentification des users
+
+# authentification des users
 def login_view(request):
     if request.method == "POST":
         form = CustomAuthenticationForm(request=request, data=request.POST)
@@ -65,14 +73,15 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
-                return redirect('')  # Rediriger vers une page d'accueil ou une page protégée
+                return redirect(
+                    ""
+                )  # Rediriger vers une page d'accueil ou une page protégée
             else:
                 form.add_error(None, "Identifiants incorrects.")
     else:
         form = CustomAuthenticationForm()
 
-    return render(request, 'login.html', {'form': form})
-
+    return render(request, "login.html", {"form": form})
 
 
 # Vue protégée par un décorateur, accessible uniquement aux administrateurs
@@ -82,11 +91,12 @@ def add_router(request):
         form = RouterForm(request.post)
         if form.is_valid():
             form.save()
-            return redirect('router_list')
-        else : 
+            return redirect("router_list")
+        else:
             form = RouterForm()
-    
-    return render(request, 'add_router.html', {'form': form})
+
+    return render(request, "add_router.html", {"form": form})
+
 
 # Fonction pour valider l'adresse IP et le masque de sous-réseau
 def validate_ip_and_mask(ip, mask):
@@ -102,7 +112,7 @@ def validate_ip_and_mask(ip, mask):
 
 
 # Vue de configuration, accessible après authentification
-@login_required                #décommenter @login_required pour sécuriser la page avec l'authentification
+@login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
 def config(request):
     return render(request, "config.html")
 
@@ -142,6 +152,7 @@ def get_dynamic_output(request):
             f'<tr><td colspan="4" class="text-danger">Erreur: {str(e)}</td></tr>',
             status=500,
         )
+
 
 def netconf_action(request):
     if request.method == "POST":
@@ -390,25 +401,27 @@ def orchestration_json(request):
 
 # Vue basée sur la classe View pour modifier la sous-interface
 @method_decorator(csrf_exempt, name="dispatch")
-class modifySubInterface(View):
+class ModifySubInterface(View):
     def post(self, request, *args, **kwargs):
         # Récupérer les paramètres de la requête GET
-        interface_name = request.GET.get('interfaceName')
-        ip_address = request.GET.get('ipAddress')
-        subnet_mask = request.GET.get('subnetMask')
-        sub_interface = request.GET.get('subInterface')
-        action = request.GET.get('action')
-        mode = request.GET.get('mode')
+        interface_name = request.GET.get("interfaceName")
+        ip_address = request.GET.get("ipAddress")
+        subnet_mask = request.GET.get("subnetMask")
+        sub_interface = request.GET.get("subInterface")
+        action = request.GET.get("action")
+        mode = request.GET.get("mode")
 
-        if not all([interface_name, ip_address, subnet_mask, sub_interface, action, mode]):
-            return JsonResponse({'error': 'Tous les champs sont requis'}, status=400)
-        
-         # 1. Enregistrer en base via formulaire
+        if not all(
+            [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
+        ):
+            return JsonResponse({"error": "Tous les champs sont requis"}, status=400)
+
+        # 1. Enregistrer en base via formulaire
         form_data = {
-            'name': interface_name,
-            'ip_address': ip_address,
-            'subnet_mask': subnet_mask,
-            'status': 'active' if action == "Create" else 'updated',
+            "name": interface_name,
+            "ip_address": ip_address,
+            "subnet_mask": subnet_mask,
+            "status": "active" if action == "Create" else "updated",
         }
 
         form = InterfaceForm(form_data)
@@ -421,19 +434,25 @@ class modifySubInterface(View):
                 interface.router = router
                 interface.save()
             except Router.DoesNotExist:
-                return JsonResponse({'error': 'Routeur non trouvé'}, status=404)
+                return JsonResponse({"error": "Routeur non trouvé"}, status=404)
         else:
-            return JsonResponse({'error': form.errors}, status=400)
+            return JsonResponse({"error": form.errors}, status=400)
 
         # 2. Envoyer la config au routeur via SSH
         try:
-            output = ssh_tool.orchestration(interface_name, ip_address, subnet_mask, sub_interface, action, mode)
-            return JsonResponse({
-                "message": "Interface enregistrée et configuration envoyée au routeur.",
-                "data": output
-            }, status=201)
+            output = ssh_tool.orchestration(
+                interface_name, ip_address, subnet_mask, sub_interface, action, mode
+            )
+            return JsonResponse(
+                {
+                    "message": "Interface enregistrée et configuration envoyée au routeur.",
+                    "data": output,
+                },
+                status=201,
+            )
         except Exception as e:
-            return JsonResponse({'error': f"Erreur SSH : {str(e)}"}, status=500)
+            return JsonResponse({"error": f"Erreur SSH : {str(e)}"}, status=500)
+
 
 # Gestion de la base de donnnées
 def delete_router(request, router_ip):
@@ -510,9 +529,9 @@ def get_interfaces_and_save(request):
     """Se connecter au routeur via SSH, récupérer les interfaces et les stocker en BDD."""
     if request.method == "POST":
         try:
-            # IP Management du routeur 
-            router_ip =settings.DEFAULT_ROUTER_IP
-            
+            # IP Management du routeur
+            router_ip = settings.DEFAULT_ROUTER_IP
+
             # Cherche le routeur en BDD
             try:
                 router = Router.objects.get(ip=router_ip)
