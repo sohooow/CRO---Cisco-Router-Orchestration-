@@ -307,7 +307,7 @@ def get_router_data_and_save(request):
 
             interfaces = parse_cli_output(
                 output
-            )  # Tu devras créer cette fonction pour parser la sortie CLI
+            )  
 
             if not interfaces:
                 return JsonResponse(
