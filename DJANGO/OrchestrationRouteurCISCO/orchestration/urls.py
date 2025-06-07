@@ -31,6 +31,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(next_page="/"), name="logout"),
     path("netconf-action/", views.netconf_action, name="netconf_action"),
     path("send-subinterface/", ModifySubInterface.as_view(), name="send_subinterface"),
+    path('sync-router/', views.sync_router, name='sync-router'),
 ]
 
 

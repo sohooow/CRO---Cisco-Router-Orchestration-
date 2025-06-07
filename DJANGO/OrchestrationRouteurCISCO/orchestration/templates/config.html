@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>CISCO IOS XE Orchestration</title>
-    
+
     {% load static %}
     <!-- Lier le fichier CSS -->
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
@@ -17,69 +17,64 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous"></script>
 
 </head>
 
 <body>
-    
+
     <!-- Header -->
     <div class="header-container">
         <h1>Orchestrate a CISCO router</h1>
-        <button id="refresh" class="btn btn-primary btn-mode" 
-                hx-get="/dynamic-output/" 
-                hx-target="#interfaceTable tbody" 
-                hx-swap="innerHTML">
+        <button id="refresh" class="btn btn-primary btn-mode" hx-get="/dynamic-output/"
+            hx-target="#interfaceTable tbody" hx-swap="innerHTML">
             Refresh interfaces' list
         </button>
-        <button id="logout" class="btn btn-danger btn-mode"
-                hx-post="/logout/"
-                hx-target="body"
-                hx-swap="innerHTML"
-                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <button id="logout" class="btn btn-danger btn-mode" hx-post="/logout/" hx-target="body" hx-swap="innerHTML"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
             Logout
         </button>
 
     </div>
-    
+
     <div class="container">
         <div class="row">
             <div class="col-md-6">
                 <!-- Container principal -->
                 <div class="command-container">
                     <h3 class="text-center mb-4">Interface management</h3>
-                    
+
                     <!--Data Section-->
                     <div id="dataSection" class="command-container" style="display: block;">
-                        <form id="cliForm"       
-                            hx-post="/send-subinterface/" 
-                            hx-trigger="submit" 
-                            hx-target="#Resultat" 
-                            hx-swap="innerHTML"
-                            hx-headers='{"Content-Type": "application/json"}'
-                            hx-ext="json-enc"
-                            onsubmit="console.log(JSON.stringify(Object.fromEntries(new FormData(this))))"
-                        >                                
+                        <form id="cliForm" hx-post="/send-subinterface/" hx-trigger="submit" hx-target="#Resultat"
+                            hx-swap="innerHTML" hx-headers='{"Content-Type": "application/json"}' hx-ext="json-enc"
+                            onsubmit="console.log(JSON.stringify(Object.fromEntries(new FormData(this))))">
 
                             {% csrf_token %}
 
                             <div class="mb-3">
                                 <label for="interfaceName" class="form-label">Interface name</label>
-                                <input type="text" name="interfaceName" id="interfaceName" class="form-control" placeholder="Example : GigabitEthernet0/1" required>
+                                <input type="text" name="interfaceName" id="interfaceName" class="form-control"
+                                    placeholder="Example : GigabitEthernet0/1" required>
                             </div>
                             <div class="mb-3">
                                 <label for="ipAddress" class="form-label">IP Address</label>
-                                <input type="text" name="ipAddress" id="ipAddress" class="form-control" placeholder="Example : 192.168.0.1">
+                                <input type="text" name="ipAddress" id="ipAddress" class="form-control"
+                                    placeholder="Example : 192.168.0.1">
                             </div>
                             <div class="mb-3">
                                 <label for="SubnetMask" class="form-label">Subnet mask</label>
-                                <input type="text" name="subnetMask" id="subnetMask" class="form-control" placeholder="Example : 255.255.255.0">
+                                <input type="text" name="subnetMask" id="subnetMask" class="form-control"
+                                    placeholder="Example : 255.255.255.0">
                             </div>
                             <div class="mb-3">
                                 <label for="SubInterface" class="form-label">Sub-interface</label>
-                                <input type="text" name="subInterface" id="subInterface" class="form-control" placeholder="Example : 2">
+                                <input type="text" name="subInterface" id="subInterface" class="form-control"
+                                    placeholder="Example : 2">
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="Action" class="form-label">Action</label>
                                 <select name="action" id="action" class="form-select">
@@ -88,15 +83,17 @@
                                     <option value="0">Delete</option>
                                 </select>
                             </div>
-                            
+
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli" checked>
+                                <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli"
+                                    checked>
                                 <label class="form-check-label" for="flexRadioDefault1">
                                     CLI
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="mode" id="radioNETCONF" value="netconf">
+                                <input class="form-check-input" type="radio" name="mode" id="radioNETCONF"
+                                    value="netconf">
                                 <label class="form-check-label" for="flexRadioDefault2">
                                     NETCONF
                                 </label>
@@ -109,8 +106,8 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="col-md-6">                
+
+            <div class="col-md-6">
                 <div class="command-container">
                     <!-- Tableau vide qui sera rempli dynamiquement avec JavaScript -->
                     <table id="interfaceTable" class="table">
@@ -130,10 +127,7 @@
                                 </td>
                             </tr>
                         </thead>
-                        <tbody id="interfaceBody"
-                            hx-get="/dynamic-output/" 
-                            hx-trigger="load" 
-                            hx-target="this" 
+                        <tbody id="interfaceBody" hx-get="/dynamic-output/" hx-trigger="load" hx-target="this"
                             hx-swap="innerHTML">
                             <!-- Les lignes seront remplacées dynamiquement par HTMX -->
                         </tbody>
@@ -142,32 +136,56 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
     <script>
         // Montre le spinner pour toute requête
-        document.body.addEventListener('htmx:beforeRequest', function() {
+        document.body.addEventListener('htmx:beforeRequest', function () {
             document.getElementById('loadingRow').style.display = 'table-row';
         });
-    
+
         // Ne cache plus le spinner ici (on va le gérer plus bas)
         // document.body.addEventListener('htmx:afterRequest', ...)
-    
+
         // Après soumission du formulaire
-        document.getElementById('cliForm').addEventListener('htmx:afterRequest', function(event) {
+        document.getElementById('cliForm').addEventListener('htmx:afterRequest', function (event) {
             // Lancer manuellement le GET pour rafraîchir la table
             htmx.ajax('GET', '/dynamic-output/', {
                 target: '#interfaceBody',
                 swap: 'innerHTML'
             });
         });
-    
+
         // Quand le tableau est mis à jour avec les nouvelles lignes
-        document.getElementById('interfaceBody').addEventListener('htmx:afterSwap', function() {
+        document.getElementById('interfaceBody').addEventListener('htmx:afterSwap', function () {
             document.getElementById('loadingRow').style.display = 'none';
         });
+
+
+
+        document.getElementById('refresh').addEventListener('click', function () {
+            // Appel AJAX POST pour synchroniser la base (en parallèle)
+            fetch('/sync-router/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    router_ip: '172.16.10.11'  // ou dynamique 
+                })
+            }).then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Sync successful');
+                    } else {
+                        console.error('Sync failed:', data.message);
+                    }
+                })
+                .catch(err => console.error('Error:', err));
+        });
     </script>
-    
+
 </body>
+
 </html>

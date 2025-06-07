@@ -380,14 +380,19 @@ def orchestration_json(request):
                     {"error": "Tous les champs sont requis"}, status=400
                 )
 
+            router = Router.objects.get(ip="172.16.10.11")
+            
             # Enregistrer l'interface dans la base de données
-            config = Interface.objects.create(
+            config, created = Interface.objects.update_or_create(
+                router=router,
                 name=interface_name,
-                ip_address=ip_address,
-                subnet_mask=subnet_mask,
-                sub_interface=sub_interface,
-                status=action,
-                mode=mode,
+                defaults={
+                    "ip_address": ip_address,
+                    "subnet_mask": subnet_mask,
+                    "sub_interface": sub_interface,
+                    "status": action,
+                    "mode": mode,
+                },
             )
 
             return JsonResponse(
@@ -577,6 +582,39 @@ def get_interfaces_and_save(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
+
+
+def sync_router(request):
+    if request.method == "POST":
+        router_ip = request.POST.get('router_ip', '172.16.10.11')
+        router, created = Router.objects.get_or_create(ip_address=router_ip)
+
+        response = request.get("http://localhost:8080/dynamic-output/")  
+
+        if response.status_code == 200:
+            data = response.text.strip().split('\n')
+            for line in data:
+                parts = line.split()
+                if len(parts) >= 4:
+                    name = parts[0]
+                    ip_address = parts[1]
+                    subnet_mask = '255.255.255.0'  # Valeur par défaut 
+                    status = "active" if parts[2].lower() == "up" else "inactive"
+
+                    Interface.objects.update_or_create(
+                        router=router,
+                        name=name,
+                        defaults={
+                            'ip_address': ip_address,
+                            'subnet_mask': subnet_mask,
+                            'status': status
+                        }
+                    )
+            return JsonResponse({"status": "success", "message": "Interfaces synchronized"})
+        else:
+            return JsonResponse({"status": "error", "message": "Failed to get data from router"}, status=500)
+
+    return JsonResponse({"status": "error", "message": "POST method required"}, status=405)
 
 # Ajout des vues pour manipuler les modèles dans la base de données via l'API REST
 
