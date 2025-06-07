@@ -85,6 +85,7 @@ def login_view(request):
 
 
 # Vue protégée par un décorateur, accessible uniquement aux administrateurs
+#nécessaire ??
 @user_passes_test(is_admin)
 def add_router(request):
     if request.method == "POST":
