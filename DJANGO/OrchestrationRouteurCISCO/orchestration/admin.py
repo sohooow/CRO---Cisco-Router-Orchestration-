@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 
 from .models import Interface, Log, Router, User
 
@@ -16,6 +17,6 @@ class RouterAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Router, RouterAdmin)
-admin.site.register(User)
+admin.site.register(User, UserAdmin)
 admin.site.register(Interface)
 admin.site.register(Log)
