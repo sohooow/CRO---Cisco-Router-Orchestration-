@@ -159,8 +159,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #Utilisation du modèle Utilisateur personnalisé 
 AUTH_USER_MODEL = 'orchestration.User'
 LOGIN_REDIRECT_URL = '/config'  # Page d'accueil ou page spécifique
-LOGOUT_REDIRECT_URL = '/login/'  # Page de connexion ou page d'accueil
-LOGIN_URL = '/login/'            # URL de la page de connexion
+LOGOUT_REDIRECT_URL = '/'  # Page de connexion ou page d'accueil
+LOGIN_URL = '/'            # URL de la page de connexion
 LOGOUT_URL = '/logout/'          # URL de la page de déconnexion
 
 INTERNAL_IPS = [
