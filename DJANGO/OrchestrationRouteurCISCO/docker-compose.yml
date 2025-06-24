@@ -41,9 +41,7 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-     - ./data:/var/lib/mysql
-     
-#- mysql_data:/var/lib/mysql
+     - mysql_data:/var/lib/mysql
 
   nginx:
     image: nginx:latest
