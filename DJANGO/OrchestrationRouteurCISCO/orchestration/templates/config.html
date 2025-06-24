@@ -57,7 +57,7 @@
                             <div class="mb-3">
                                 <label for="interfaceName" class="form-label">Interface name</label>
                                 <input type="text" name="interfaceName" id="interfaceName" class="form-control"
-                                    placeholder="Example : GigabitEthernet0/1" required>
+                                    placeholder="Example : GigabitEthernet1" required>
                             </div>
                             <div class="mb-3">
                                 <label for="ipAddress" class="form-label">IP Address</label>
@@ -87,14 +87,14 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli"
                                     checked>
-                                <label class="form-check-label" for="flexRadioDefault1">
+                                <label class="form-check-label" for="radioCLI">
                                     CLI
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="mode" id="radioNETCONF"
                                     value="netconf">
-                                <label class="form-check-label" for="flexRadioDefault2">
+                                <label class="form-check-label" for="radioNETCONF">
                                     NETCONF
                                 </label>
                             </div>
@@ -160,29 +160,6 @@
         // Quand le tableau est mis à jour avec les nouvelles lignes
         document.getElementById('interfaceBody').addEventListener('htmx:afterSwap', function () {
             document.getElementById('loadingRow').style.display = 'none';
-        });
-
-
-
-        document.getElementById('refresh').addEventListener('click', function () {
-            // Appel AJAX POST pour synchroniser la base (en parallèle)
-            fetch('/sync-router/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    router_ip: '172.16.10.11'  // ou dynamique 
-                })
-            }).then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        console.log('Sync successful');
-                    } else {
-                        console.error('Sync failed:', data.message);
-                    }
-                })
-                .catch(err => console.error('Error:', err));
         });
     </script>
 

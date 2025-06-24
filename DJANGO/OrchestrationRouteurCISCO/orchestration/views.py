@@ -405,61 +405,6 @@ def orchestration_json(request):
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 
-# Vue basée sur la classe View pour modifier la sous-interface
-@method_decorator(csrf_exempt, name="dispatch")
-class ModifySubInterface(View):
-    def post(self, request, *args, **kwargs):
-        # Récupérer les paramètres de la requête GET
-        interface_name = request.GET.get("interfaceName")
-        ip_address = request.GET.get("ipAddress")
-        subnet_mask = request.GET.get("subnetMask")
-        sub_interface = request.GET.get("subInterface")
-        action = request.GET.get("action")
-        mode = request.GET.get("mode")
-
-        if not all(
-            [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
-        ):
-            return JsonResponse({"error": "Tous les champs sont requis"}, status=400)
-
-        # 1. Enregistrer en base via formulaire
-        form_data = {
-            "name": interface_name,
-            "ip_address": ip_address,
-            "subnet_mask": subnet_mask,
-            "status": "active" if action == "Create" else "updated",
-        }
-
-        form = InterfaceForm(form_data)
-
-        if form.is_valid():
-            interface = form.save(commit=False)
-
-            try:
-                router = Router.objects.get(ip_address="172.16.10.11")
-                interface.router = router
-                interface.save()
-            except Router.DoesNotExist:
-                return JsonResponse({"error": "Routeur non trouvé"}, status=404)
-        else:
-            return JsonResponse({"error": form.errors}, status=400)
-
-        # 2. Envoyer la config au routeur via SSH
-        try:
-            output = ssh_tool.orchestration(
-                interface_name, ip_address, subnet_mask, sub_interface, action, mode
-            )
-            return JsonResponse(
-                {
-                    "message": "Interface enregistrée et configuration envoyée au routeur.",
-                    "data": output,
-                },
-                status=201,
-            )
-        except Exception as e:
-            return JsonResponse({"error": f"Erreur SSH : {str(e)}"}, status=500)
-
-
 # Gestion de la base de donnnées
 def delete_router(request, router_ip):
     """Supprimer un router par son adresse IP"""
@@ -582,40 +527,6 @@ def get_interfaces_and_save(request):
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
-
-
-def sync_router(request):
-    if request.method == "POST":
-        router_ip = request.POST.get('router_ip', '172.16.10.11')
-        router, created = Router.objects.get_or_create(ip_address=router_ip)
-
-        response = request.get("http://localhost:8080/dynamic-output/")  
-
-        if response.status_code == 200:
-            data = response.text.strip().split('\n')
-            for line in data:
-                parts = line.split()
-                if len(parts) >= 4:
-                    name = parts[0]
-                    ip_address = parts[1]
-                    subnet_mask = '255.255.255.0'  # Valeur par défaut 
-                    status = "active" if parts[2].lower() == "up" else "inactive"
-
-                    Interface.objects.update_or_create(
-                        router=router,
-                        name=name,
-                        defaults={
-                            'ip_address': ip_address,
-                            'subnet_mask': subnet_mask,
-                            'status': status
-                        }
-                    )
-            return JsonResponse({"status": "success", "message": "Interfaces synchronized"})
-        else:
-            return JsonResponse({"status": "error", "message": "Failed to get data from router"}, status=500)
-
-    return JsonResponse({"status": "error", "message": "POST method required"}, status=405)
-
 # Ajout des vues pour manipuler les modèles dans la base de données via l'API REST
 
 
@@ -643,3 +554,58 @@ class LogViewSet(viewsets.ModelViewSet):
 class InterfaceViewSet(viewsets.ModelViewSet):
     queryset = Interface.objects.all()
     serializer_class = InterfaceSerializer
+
+# Vue basée sur la classe View pour modifier la sous-interface
+@method_decorator(csrf_exempt, name="dispatch")
+class ModifySubInterface(View):
+    def post(self, request, *args, **kwargs):
+        # Récupérer les paramètres de la requête GET
+        interface_name = request.GET.get("interfaceName")
+        ip_address = request.GET.get("ipAddress")
+        subnet_mask = request.GET.get("subnetMask")
+        sub_interface = request.GET.get("subInterface")
+        action = request.GET.get("action")
+        mode = request.GET.get("mode")
+
+        if not all(
+            [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
+        ):
+            return JsonResponse({"error": "Tous les champs sont requis"}, status=400)
+
+        # 1. Enregistrer en base via formulaire
+        form_data = {
+            "name": interface_name,
+            "ip_address": ip_address,
+            "subnet_mask": subnet_mask,
+            "status": "active" if action == "Create" else "updated",
+        }
+
+        form = InterfaceForm(form_data)
+
+        if form.is_valid():
+            interface = form.save(commit=False)
+
+            try:
+                router = Router.objects.get(ip_address="172.16.10.11")
+                interface.router = router
+                interface.save()
+            except Router.DoesNotExist:
+                return JsonResponse({"error": "Routeur non trouvé"}, status=404)
+        else:
+            return JsonResponse({"error": form.errors}, status=400)
+
+        # 2. Envoyer la config au routeur via SSH
+        try:
+            output = ssh_tool.orchestration(
+                interface_name, ip_address, subnet_mask, sub_interface, action, mode
+            )
+            return JsonResponse(
+                {
+                    "message": "Interface enregistrée et configuration envoyée au routeur.",
+                    "data": output,
+                },
+                status=201,
+            )
+        except Exception as e:
+            return JsonResponse({"error": f"Erreur SSH : {str(e)}"}, status=500)
+
