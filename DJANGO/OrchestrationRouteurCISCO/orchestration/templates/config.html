@@ -19,7 +19,16 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@2.0.4"
         integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
-        crossorigin="anonymous"></script>
+        crossorigin="anonymous">
+    </script>
+
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha384-k6kNCOc8w9Ut5RkjtMzwLBhf7IMihQPY0F4YsmnZ9f9HPH3YXwYgRNHAFam1np3k"
+        crossorigin="anonymous"
+    />
 
 </head>
 
@@ -57,27 +66,27 @@
                             <div class="mb-3">
                                 <label for="interfaceName" class="form-label">Interface name</label>
                                 <input type="text" name="interfaceName" id="interfaceName" class="form-control"
-                                    placeholder="Example : GigabitEthernet0/1" required>
+                                    placeholder="Example : GigabitEthernet0/1" required disabled>
                             </div>
                             <div class="mb-3">
                                 <label for="ipAddress" class="form-label">IP Address</label>
                                 <input type="text" name="ipAddress" id="ipAddress" class="form-control"
-                                    placeholder="Example : 192.168.0.1">
+                                    placeholder="Example : 192.168.0.1" disabled>
                             </div>
                             <div class="mb-3">
-                                <label for="SubnetMask" class="form-label">Subnet mask</label>
+                                <label for="subnetMask" class="form-label">Subnet mask</label>
                                 <input type="text" name="subnetMask" id="subnetMask" class="form-control"
-                                    placeholder="Example : 255.255.255.0">
+                                    placeholder="Example : 255.255.255.0" disabled>
                             </div>
                             <div class="mb-3">
-                                <label for="SubInterface" class="form-label">Sub-interface</label>
+                                <label for="subInterface" class="form-label">Sub-interface</label>
                                 <input type="text" name="subInterface" id="subInterface" class="form-control"
-                                    placeholder="Example : 2">
+                                    placeholder="Example : 2" required disabled>
                             </div>
 
                             <div class="mb-3">
-                                <label for="Action" class="form-label">Action</label>
-                                <select name="action" id="action" class="form-select">
+                                <label for="action" class="form-label">Action</label>
+                                <select name="action" id="action" class="form-select" disabled>
                                     <option value="1">Create</option>
                                     <option value="1">Update</option>
                                     <option value="0">Delete</option>
@@ -86,15 +95,15 @@
 
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli"
-                                    checked>
-                                <label class="form-check-label" for="flexRadioDefault1">
+                                    checked disabled>
+                                <label class="form-check-label" for="radioCLI">
                                     CLI
                                 </label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="mode" id="radioNETCONF"
-                                    value="netconf">
-                                <label class="form-check-label" for="flexRadioDefault2">
+                                    value="netconf" disabled>
+                                <label class="form-check-label" for="radioNETCONF">
                                     NETCONF
                                 </label>
                             </div>
@@ -141,12 +150,11 @@
     <script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
     <script>
         // Montre le spinner pour toute requête
-        document.body.addEventListener('htmx:beforeRequest', function () {
-            document.getElementById('loadingRow').style.display = 'table-row';
+        document.body.addEventListener('htmx:beforeRequest', function (evt) {
+            if (!evt.detail.elt.classList.contains('edit')) {
+                document.getElementById('loadingRow').style.display = 'table-row';
+            }
         });
-
-        // Ne cache plus le spinner ici (on va le gérer plus bas)
-        // document.body.addEventListener('htmx:afterRequest', ...)
 
         // Après soumission du formulaire
         document.getElementById('cliForm').addEventListener('htmx:afterRequest', function (event) {
@@ -184,6 +192,7 @@
                 })
                 .catch(err => console.error('Error:', err));
         });
+
     </script>
 
 </body>
