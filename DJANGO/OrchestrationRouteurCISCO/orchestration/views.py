@@ -145,21 +145,21 @@ def get_dynamic_output(request):
                         {(
                             f"<button hx-get='/add-subinterface/{item['interface']}/{item['ip_address']}' "
                             f"hx-target='#dataSection' hx-swap='innerHTML' "
-                            f"class='btn btn-success btn-sm me-1'>"
+                            f"class='btn btn-success btn-sm me-1 add'>"
                             f"Add <i class='fa fa-plus ms-1'></i></button>"
                             if re.match(r'^GigabitEthernet[1-4]$', item['interface']) else ""
                         )}
                         {(
                             f"<button hx-get='/update-subinterface/{item['interface']}/{item['ip_address']}' "
                             f"hx-target='#dataSection' hx-swap='innerHTML' "
-                            f"class='btn btn-primary btn-sm me-1'>"
+                            f"class='btn btn-primary btn-sm me-1 update'>"
                             f"Edit <i class='fa fa-pencil-alt ms-1'></i></button>"
                             if '.' in item['interface'] else ""
                         )}
                         {(
                             f"<button hx-get='/delete-subinterface/{item['interface']}/{item['ip_address']}' "
                             f"hx-target='#dataSection' hx-swap='innerHTML' "
-                            f"class='btn btn-danger btn-sm'>"
+                            f"class='btn btn-danger btn-sm delete'>"
                             f"Delete <i class='fa fa-trash ms-1'></i></button>"
                             if '.' in item['interface'] else ""
                         )}

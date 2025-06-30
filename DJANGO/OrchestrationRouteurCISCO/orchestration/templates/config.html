@@ -153,8 +153,20 @@
     <script>
         // Montre le spinner pour toute requête
         document.body.addEventListener('htmx:beforeRequest', function (evt) {
-            if (!evt.detail.elt.classList.contains('edit')) {
-                document.getElementById('loadingRow').style.display = 'table-row';
+            const elt = evt.detail.elt;
+
+            // Si le bouton a une des classes 'add', 'edit', ou 'delete', on ne montre pas le spinner
+            if (
+                elt.classList.contains('add') ||
+                elt.classList.contains('update') ||
+                elt.classList.contains('delete')
+            ) {
+                return; // ne rien faire
+            }
+
+            const loadingRow = document.getElementById('loadingRow');
+            if (loadingRow) {
+                loadingRow.style.display = 'table-row';
             }
         });
 
