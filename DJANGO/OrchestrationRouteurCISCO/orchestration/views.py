@@ -145,6 +145,15 @@ def get_dynamic_output(request):
                             Edit <i class="fa fa-pencil-alt ms-1"></i>
                         </button>
                     </td>
+                    <td>
+                        <button 
+                            hx-get="/load-subinterface/{item['interface']}/{item['ip_address']}"
+                            hx-target="#dataSection"
+                            hx-swap="innerHTML"
+                            class="btn btn-danger btn-mode delete">
+                            Delete <i class="fa fa-pencil-alt ms-1"></i>
+                        </button>
+                    </td>
                 </tr>
                 """
                 for item in filtered_output
