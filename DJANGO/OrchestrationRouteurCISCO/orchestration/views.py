@@ -445,7 +445,7 @@ class ModifySubInterface(View):
             "name": interface_name,
             "ip_address": ip_address,
             "subnet_mask": subnet_mask,
-            "status": "active" if action == "1" else "updated",
+            "status": "active" if action == "1" else "inactive",
         }
 
         form = InterfaceForm(form_data)
@@ -464,7 +464,7 @@ class ModifySubInterface(View):
 
         # 2. Envoyer la config au routeur via SSH
         try:
-            output = ssh_tool.orchestration(
+            output = ssh_tool.sendConfig(
                 interface_name, ip_address, subnet_mask, sub_interface, action, mode
             )
             return JsonResponse(
