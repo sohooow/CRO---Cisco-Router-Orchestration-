@@ -22,7 +22,7 @@ from rest_framework.response import Response
 
 import ssh_tool
 
-from .forms import InterfaceForm, RouterForm, SubInterfaceForm
+from .forms import CustomAuthenticationForm, InterfaceForm, RouterForm, SubInterfaceForm
 from .models import Interface, Log, Router, User
 from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 from .serializersArti import (
@@ -358,7 +358,7 @@ def get_router_data_and_save(request):
                 subnet_mask = interface.get(
                     "subnet_mask", "255.255.255.0"
                 )  # Valeur par défaut si non fournie
-                status = interface.get("status", "inactive")
+                status = interface.get("status", "active")
 
                 Interface.objects.create(
                     router=router,
