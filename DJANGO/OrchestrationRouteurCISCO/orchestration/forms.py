@@ -1,6 +1,6 @@
 from django import forms
 from .models import Router, Interface, User
-from django.contrib.auth.forms import AuthenticationForm
+
 
 
 class SubInterfaceForm(forms.Form):
@@ -19,8 +19,4 @@ class RouterForm(forms.ModelForm):
 class InterfaceForm(forms.ModelForm):
     class Meta:
         model = Interface
-        fields = ['name', 'ip_address', 'subnet_mask', 'status']
-
-class CustomAuthenticationForm(AuthenticationForm):
-    username = forms.CharField(label="Nom d'utilisateur", max_length=100)
-    password = forms.CharField(label="Mot de passe", widget=forms.PasswordInput)
+        fields = ['router','name', 'ip_address', 'subnet_mask', 'status']

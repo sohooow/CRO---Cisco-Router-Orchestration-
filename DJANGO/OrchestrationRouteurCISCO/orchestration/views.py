@@ -22,7 +22,7 @@ from rest_framework.response import Response
 
 import ssh_tool
 
-from .forms import CustomAuthenticationForm, InterfaceForm, RouterForm, SubInterfaceForm
+from .forms import InterfaceForm, RouterForm, SubInterfaceForm
 from .models import Interface, Log, Router, User
 from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 from .serializersArti import (
