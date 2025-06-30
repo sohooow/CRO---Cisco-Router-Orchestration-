@@ -30,11 +30,7 @@
 
         <div class="mb-3">
             <label for="action" class="form-label">Action</label>
-            <select name="action" id="action" class="form-select">
-                <option value="Create" {% if action == "Create" and not subInterface %}selected{% endif %}>Create</option>
-                <option value="Update" {% if action == "Update" and subInterface %}selected{% endif %}>Update</option>
-                <option value="Delete" {% if action == "Delete" %}selected{% endif %}>Delete</option>
-            </select>
+            <input type="text" name="action" id="action" class="form-control" value="{{ action }}" readonly>
         </div>
 
 
