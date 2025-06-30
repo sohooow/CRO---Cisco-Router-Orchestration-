@@ -126,6 +126,8 @@
                                 <th>IP</th>
                                 <th>Status</th>
                                 <th>Protocol</th>
+                                <th>Actions</th>
+
                             </tr>
                             <!-- Spinner -->
                             <tr id="loadingRow" style="display: none;">
@@ -157,9 +159,8 @@
         });
 
         // Après soumission du formulaire
-        document.getElementById('cliForm').addEventListener('htmx:afterRequest', function (event) {
+        document.body.addEventListener('htmx:afterRequest', function (event) {
             if (event.detail.requestConfig.path === '/send-subinterface/') {
-                // Ajouter un gestionnaire temporaire pour cacher le spinner
                 const body = document.getElementById('interfaceBody');
 
                 function stopSpinner() {
@@ -176,6 +177,7 @@
                 });
             }
         });
+
 
 
         // Quand le tableau est mis à jour avec les nouvelles lignes

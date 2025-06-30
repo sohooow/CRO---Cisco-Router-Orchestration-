@@ -33,11 +33,20 @@ urlpatterns = [
     path("send-subinterface/", ModifySubInterface.as_view(), name="send_subinterface"),
     path("sync-router/", views.sync_router, name="sync-router"),
     path(
-        "load-subinterface/<str:interface>/<str:ipaddress>/",
-        views.load_subinterface,
-        name="load_subinterface",
+        "add-subinterface/<str:interface>/<str:ipaddress>/",
+        views.add_subinterface,
+        name="add_subinterface",
     ),
-    #path('sync-router/', views.sync_router, name='sync-router'),
+    path(
+        "update-subinterface/<str:interface>/<str:ipaddress>/",
+        views.update_subinterface,
+        name="update_subinterface",
+    ),
+    path(
+        "delete-subinterface/<str:interface>/<str:ipaddress>/",
+        views.delete_subinterface,
+        name="delete_subinterface",
+    ),
 ]
 
 

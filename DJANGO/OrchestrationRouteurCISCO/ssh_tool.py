@@ -1,11 +1,11 @@
-import os 
+import os
+
+from lxml import etree
+from ncclient import manager
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
-from ncclient import manager
-from datetime import datetime
-from lxml import etree
 
-host = "172.16.10.11"                   #importer la data depuis la bdd
+host = "172.16.10.11"  # importer la data depuis la bdd
 username = "admin"
 password = "c79e97SGVg7dc"
 enable = "Admin123INT"
@@ -52,7 +52,7 @@ def ssh_configure_netmiko(config_commands):
         return "Erreur : Délai de connexion dépassé."
     except Exception as e:
         return f"Erreur inattendue : {str(e)}"
-    
+
 
 def send_commit_rpc():
     try:
@@ -62,10 +62,10 @@ def send_commit_rpc():
             username=device["username"],
             password=device["password"],
             hostkey_verify=False,
-            device_params={'name': 'csr'},
+            device_params={"name": "csr"},
             allow_agent=False,
             look_for_keys=False,
-            timeout=30
+            timeout=30,
         ) as m:
             print("\n===== Envoi du COMMIT NETCONF =====")
             response = m.commit()
@@ -75,16 +75,17 @@ def send_commit_rpc():
 
 
 def load_netconf_template(template_path, variables: dict):
-   
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     full_path = os.path.join(base_dir, template_path)
 
     if not os.path.exists(full_path):
         raise FileNotFoundError(f"Template introuvable : {full_path}")
 
-    with open(full_path, 'r', encoding='utf-8') as f:
+    with open(full_path, "r", encoding="utf-8") as f:
         template = f.read()
     return template.format(**variables)
+
 
 def ssh_configure_netconf(xml_payload):
     try:
@@ -94,10 +95,10 @@ def ssh_configure_netconf(xml_payload):
             username=device["username"],
             password=device["password"],
             hostkey_verify=False,
-            device_params={'name': 'csr'},
+            device_params={"name": "csr"},
             allow_agent=False,
             look_for_keys=False,
-            timeout=30
+            timeout=30,
         ) as m:
             print("Connexion NETCONF établie")
 
@@ -106,8 +107,7 @@ def ssh_configure_netconf(xml_payload):
 
             # Créer l'élément <config> parent
             config_element = etree.Element(
-                "config",
-                xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"
+                "config", xmlns="urn:ietf:params:xml:ns:netconf:base:1.0"
             )
             config_element.append(inner)
 
@@ -130,7 +130,7 @@ def sendConfig(
 ):
 
     match given_action:
-        case "1":
+        case "Create":
             config_commands = [
                 f"interface {given_interface_name}.{given_sub_interface}",
                 "encapsulation dot1Q 1",
@@ -139,7 +139,16 @@ def sendConfig(
                 "end",
             ]
 
-        case "0":
+        case "Update":
+            config_commands = [
+                f"interface {given_interface_name}.{given_sub_interface}",
+                "encapsulation dot1Q 1",
+                f"ip address {given_ip_address} {given_subnet_mask}",
+                "no shutdown",
+                "end",
+            ]
+
+        case "Delete":
             config_commands = [
                 f"no interface {given_interface_name}.{given_sub_interface}",
                 "end",
@@ -160,26 +169,33 @@ def sendConfig(
                 f"Erreur dans orchestration(): {str(e)}"
             )  # Capture l'exception et l'affiche
             return {"error": f"Erreur dans orchestration(): {str(e)}"}
-    
 
     elif send_mode == "netconf":
         try:
             # Construction du nom d'interface (ex: GigabitEthernet4.7)
-            interface_name = f"{given_interface_name}.{given_sub_interface}" if given_sub_interface else given_interface_name
+            interface_name = (
+                f"{given_interface_name}.{given_sub_interface}"
+                if given_sub_interface
+                else given_interface_name
+            )
             vlan_id = "4"
 
             # Chargement du template XML en fonction de l'action
-            if given_action == "1":
-                xml_payload = load_netconf_template("templates_netconf/create_update_interface_native.xml", {
-                    "interface_name": interface_name,
-                    "vlan_id": vlan_id,
-                    "ip": given_ip_address,
-                    "mask": given_subnet_mask
-                })
-            elif given_action == "0":
-                xml_payload = load_netconf_template("templates_netconf/delete_interface_native.xml", {
-                    "interface_name": interface_name
-                })
+            if given_action == "Create" or given_action == "Update":
+                xml_payload = load_netconf_template(
+                    "templates_netconf/create_update_interface_native.xml",
+                    {
+                        "interface_name": interface_name,
+                        "vlan_id": vlan_id,
+                        "ip": given_ip_address,
+                        "mask": given_subnet_mask,
+                    },
+                )
+            elif given_action == "Delete":
+                xml_payload = load_netconf_template(
+                    "templates_netconf/delete_interface_native.xml",
+                    {"interface_name": interface_name},
+                )
             else:
                 return {"error": "Action non valide pour netconf"}
 
@@ -193,14 +209,10 @@ def sendConfig(
             # Commit pour valider les modifications
             commit_result = send_commit_rpc()
 
-            return {
-                "edit-config": edit_result,
-                "commit": commit_result
-            }
+            return {"edit-config": edit_result, "commit": commit_result}
 
         except Exception as e:
             return {"error": f"Erreur NETCONF : {str(e)}"}
-
 
 
 def get_interfaces_details():
@@ -250,11 +262,10 @@ if __name__ == "__main__":
         given_subnet_mask="255.255.255.0",
         given_sub_interface="7",
         given_action="1",
-        send_mode="netconf"
+        send_mode="netconf",
     )
     print("\n===== Résultat NETCONF =====\n")
     print(output)
-
 
 
 # le hostname par défaut est pod1-cat9kv

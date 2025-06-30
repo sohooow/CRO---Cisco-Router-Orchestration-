@@ -127,7 +127,12 @@ def get_dynamic_output(request):
         # Vérification si output est une liste
         if isinstance(output, list):
 
-            filtered_output = [item for item in output if item["status"] != "deleted"]
+            filtered_output = [
+                item
+                for item in output
+                if item["status"] != "deleted"
+                and item["interface"] != "GigabitEthernet1"
+            ]
 
             html_rows = "".join(
                 f"""
@@ -137,22 +142,27 @@ def get_dynamic_output(request):
                     <td>{item['status']}</td>
                     <td>{item['proto']}</td>
                     <td>
-                        <button 
-                            hx-get="/load-subinterface/{item['interface']}/{item['ip_address']}"
-                            hx-target="#dataSection"
-                            hx-swap="innerHTML"
-                            class="btn btn-primary btn-mode edit">
-                            Edit <i class="fa fa-pencil-alt ms-1"></i>
-                        </button>
-                    </td>
-                    <td>
-                        <button 
-                            hx-get="/load-subinterface/{item['interface']}/{item['ip_address']}"
-                            hx-target="#dataSection"
-                            hx-swap="innerHTML"
-                            class="btn btn-danger btn-mode delete">
-                            Delete <i class="fa fa-pencil-alt ms-1"></i>
-                        </button>
+                        {(
+                            f"<button hx-get='/add-subinterface/{item['interface']}/{item['ip_address']}' "
+                            f"hx-target='#dataSection' hx-swap='innerHTML' "
+                            f"class='btn btn-success btn-sm me-1'>"
+                            f"Add <i class='fa fa-plus ms-1'></i></button>"
+                            if re.match(r'^GigabitEthernet[1-4]$', item['interface']) else ""
+                        )}
+                        {(
+                            f"<button hx-get='/update-subinterface/{item['interface']}/{item['ip_address']}' "
+                            f"hx-target='#dataSection' hx-swap='innerHTML' "
+                            f"class='btn btn-primary btn-sm me-1'>"
+                            f"Edit <i class='fa fa-pencil-alt ms-1'></i></button>"
+                            if '.' in item['interface'] else ""
+                        )}
+                        {(
+                            f"<button hx-get='/delete-subinterface/{item['interface']}/{item['ip_address']}' "
+                            f"hx-target='#dataSection' hx-swap='innerHTML' "
+                            f"class='btn btn-danger btn-sm'>"
+                            f"Delete <i class='fa fa-trash ms-1'></i></button>"
+                            if '.' in item['interface'] else ""
+                        )}
                     </td>
                 </tr>
                 """
@@ -679,7 +689,18 @@ class InterfaceViewSet(viewsets.ModelViewSet):
     serializer_class = InterfaceSerializer
 
 
-def load_subinterface(request, interface, ipaddress):
+def add_subinterface(request, interface, ipaddress):
+    interface_name = interface.split(".")[0]
+    data = {
+        "interfaceName": interface_name,
+        "subInterface": "",
+        "ipAddress": ipaddress,
+        "action": "Create",
+    }
+    return render(request, "subinterface_form_enabled.html", data)
+
+
+def update_subinterface(request, interface, ipaddress):
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -690,5 +711,22 @@ def load_subinterface(request, interface, ipaddress):
         "interfaceName": interface_name,
         "subInterface": sub_interface,
         "ipAddress": ipaddress,
+        "action": "Update",
+    }
+    return render(request, "subinterface_form_enabled.html", data)
+
+
+def delete_subinterface(request, interface, ipaddress):
+    if "." in interface:
+        interface_name, sub_interface = interface.split(".", 1)
+    else:
+        interface_name = interface
+        sub_interface = ""
+
+    data = {
+        "interfaceName": interface_name,
+        "subInterface": sub_interface,
+        "ipAddress": ipaddress,
+        "action": "Delete",
     }
     return render(request, "subinterface_form_enabled.html", data)
