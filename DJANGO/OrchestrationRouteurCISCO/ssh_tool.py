@@ -257,11 +257,11 @@ if __name__ == "__main__":
     print(output)
 
     output = sendConfig(
-        given_interface_name="4",
-        given_ip_address="172.16.47.11",
+        given_interface_name="2",
+        given_ip_address="192.168.27.2",
         given_subnet_mask="255.255.255.0",
         given_sub_interface="7",
-        given_action="1",
+        given_action="Delete",
         send_mode="netconf",
     )
     print("\n===== Résultat NETCONF =====\n")
