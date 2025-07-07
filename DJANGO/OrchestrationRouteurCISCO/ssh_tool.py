@@ -142,7 +142,7 @@ def sendConfig(
         case "Update":
             config_commands = [
                 f"interface {given_interface_name}.{given_sub_interface}",
-                "encapsulation dot1Q" + given_sub_interface,
+                "encapsulation dot1Q " + given_sub_interface,
                 f"ip address {given_ip_address} {given_subnet_mask}",
                 "no shutdown",
                 "end",
