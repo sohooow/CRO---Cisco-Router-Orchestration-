@@ -17,9 +17,7 @@ services:
         condition: service_healthy
 
     volumes:
-      - ./orchestration/static:/OrchestrationRouteurCISCO/orchestration/static
-      - ./staticfiles:/OrchestrationRouteurCISCO/staticfiles
-      - ./media:/OrchestrationRouteurCISCO/media
+      - .:/app
       - ./nginx.conf:/etc/nginx/nginx.conf
 
     environment:
