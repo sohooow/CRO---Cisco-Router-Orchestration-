@@ -69,3 +69,4 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
 
 # Commande de démarrage PROD
 #CMD service nginx start && gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8080 --workers 4
+

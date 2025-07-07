@@ -133,7 +133,7 @@ def sendConfig(
         case "Create":
             config_commands = [
                 f"interface {given_interface_name}.{given_sub_interface}",
-                "encapsulation dot1Q 1",
+                "encapsulation dot1Q " + given_sub_interface,
                 f"ip address {given_ip_address} {given_subnet_mask}",
                 "no shutdown",
                 "end",
@@ -142,7 +142,7 @@ def sendConfig(
         case "Update":
             config_commands = [
                 f"interface {given_interface_name}.{given_sub_interface}",
-                "encapsulation dot1Q 1",
+                "encapsulation dot1Q" + given_sub_interface,
                 f"ip address {given_ip_address} {given_subnet_mask}",
                 "no shutdown",
                 "end",
@@ -173,8 +173,9 @@ def sendConfig(
     elif send_mode == "netconf":
         try:
             # Construction du nom d'interface (ex: GigabitEthernet4.7)
+            cropped_given_interface_name = given_interface_name[-1]
             interface_name = (
-                f"{given_interface_name}.{given_sub_interface}"
+                f"{cropped_given_interface_name}.{given_sub_interface}"
                 if given_sub_interface
                 else given_interface_name
             )
@@ -257,11 +258,11 @@ if __name__ == "__main__":
     print(output)
 
     output = sendConfig(
-        given_interface_name="2",
+        given_interface_name="GigabitEthernet2",
         given_ip_address="192.168.27.2",
         given_subnet_mask="255.255.255.0",
         given_sub_interface="7",
-        given_action="Delete",
+        given_action="Update",
         send_mode="netconf",
     )
     print("\n===== Résultat NETCONF =====\n")
