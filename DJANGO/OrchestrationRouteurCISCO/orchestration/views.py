@@ -697,7 +697,7 @@ def add_subinterface(request, interface, ipaddress):
         "ipAddress": ipaddress,
         "action": "Create",
     }
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_add_update.html", data)
 
 
 def update_subinterface(request, interface, ipaddress):
@@ -713,7 +713,7 @@ def update_subinterface(request, interface, ipaddress):
         "ipAddress": ipaddress,
         "action": "Update",
     }
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_add_update.html", data)
 
 
 def delete_subinterface(request, interface, ipaddress):
@@ -729,4 +729,4 @@ def delete_subinterface(request, interface, ipaddress):
         "ipAddress": ipaddress,
         "action": "Delete",
     }
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_delete.html", data)
