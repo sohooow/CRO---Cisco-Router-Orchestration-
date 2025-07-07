@@ -20,7 +20,7 @@ class RouterForm(forms.ModelForm):
 class InterfaceForm(forms.ModelForm):
     class Meta:
         model = Interface
-        fields = ['router','name', 'ip_address', 'subnet_mask', 'status']
+        fields = ['name', 'ip_address', 'subnet_mask', 'status']
 
 class CustomAuthenticationForm(AuthenticationForm):
     username = forms.CharField(label="Nom d'utilisateur", max_length=100)
