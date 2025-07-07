@@ -358,7 +358,7 @@ def get_router_data_and_save(request):
                 subnet_mask = interface.get(
                     "subnet_mask", "255.255.255.0"
                 )  # Valeur par défaut si non fournie
-                status = interface.get("status", "inactive")
+                status = interface.get("status", "active")
 
                 Interface.objects.create(
                     router=router,

@@ -3,6 +3,7 @@ from .models import Router, Interface, User
 from django.contrib.auth.forms import AuthenticationForm
 
 
+
 class SubInterfaceForm(forms.Form):
     interfaceName = forms.CharField()
     ipAddress = forms.GenericIPAddressField()
