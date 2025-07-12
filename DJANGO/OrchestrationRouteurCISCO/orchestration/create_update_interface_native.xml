@@ -7,20 +7,23 @@
       <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
         <interface>
           <GigabitEthernet>
-            <name>{interface_name}</name>
-            <encapsulation>
-              <dot1Q>
-                <vlan-id>{vlan_id}</vlan-id>
-              </dot1Q>
-            </encapsulation>
-            <ip>
-              <address>
-                <primary>
-                  <address>{ip}</address>
-                  <mask>{mask}</mask>
-                </primary>
-              </address>
-            </ip>
+            <name>{interface_physique}</name>  <!-- ex: 4 -->
+            <subinterface>
+              <id>{subinterface_id}</id>       <!-- ex: 6 pour 4.6 -->
+              <encapsulation>
+                <dot1Q>
+                  <vlan-id>{vlan_id}</vlan-id>
+                </dot1Q>
+              </encapsulation>
+              <ip>
+                <address>
+                  <primary>
+                    <address>{ip}</address>
+                    <mask>{mask}</mask>
+                  </primary>
+                </address>
+              </ip>
+            </subinterface>
           </GigabitEthernet>
         </interface>
       </native>

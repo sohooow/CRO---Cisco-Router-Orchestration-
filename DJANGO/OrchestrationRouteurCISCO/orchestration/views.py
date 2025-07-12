@@ -706,8 +706,7 @@ def add_subinterface(request, interface, ipaddress):
         "action": "Create",
         "is_readwrite": is_readwrite,
     }
-
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_add_update.html", data)
 
 
 @login_required
@@ -726,7 +725,7 @@ def update_subinterface(request, interface, ipaddress):
         "action": "Update",
         "is_readwrite": is_readwrite,
     }
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_add_update.html", data)
 
 
 def delete_subinterface(request, interface, ipaddress):
@@ -744,4 +743,4 @@ def delete_subinterface(request, interface, ipaddress):
         "action": "Delete",
         "is_readwrite": is_readwrite,
     }
-    return render(request, "subinterface_form_enabled.html", data)
+    return render(request, "subinterface_form_delete.html", data)

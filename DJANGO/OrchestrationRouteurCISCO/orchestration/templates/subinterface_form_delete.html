@@ -1,0 +1,52 @@
+<div id="dataSection" class="command-container" style="display: block;">
+    <form id="cliForm" hx-post="/send-subinterface/" hx-trigger="submit" hx-target="#Resultat" hx-swap="innerHTML"
+        hx-headers='{"Content-Type": "application/json"}' hx-ext="json-enc">
+
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="interfaceName" class="form-label">Interface name</label>
+            <input type="text" name="interfaceName" id="interfaceName" class="form-control"
+                placeholder="{{ interfaceName}}" required readonly value="{{ interfaceName }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="ipAddress" class="form-label">IP Address</label>
+            <input type="text" name="ipAddress" id="ipAddress" class="form-control" placeholder="{{ ipAddress}}"
+                value="{{ ipAddress }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="subnetMask" class="form-label">Subnet mask</label>
+            <input type="text" name="subnetMask" id="subnetMask" class="form-control"
+                placeholder="Example : 255.255.255.0" value="255.255.255.0" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="subInterface" class="form-label">Sub-interface</label>
+            <input type="text" name="subInterface" id="subInterface" class="form-control"
+                placeholder="{{ subInterface|default:'Example : 2' }}" value="{{ subInterface }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            <label for="action" class="form-label">Action</label>
+            <input type="text" name="action" id="action" class="form-control" value="{{ action }}" readonly>
+        </div>
+
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="mode" id="radioCLI" value="cli" checked>
+            <label class="form-check-label" for="radioCLI">CLI</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="mode" id="radioNETCONF" value="netconf">
+            <label class="form-check-label" for="radioNETCONF">NETCONF</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Send</button>
+    </form>
+
+    <div class="output" id="Output">
+        <p id="Resultat">Output results will be shown here</p>
+    </div>
+</div>

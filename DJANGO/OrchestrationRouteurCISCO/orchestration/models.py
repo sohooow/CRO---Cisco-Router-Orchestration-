@@ -8,6 +8,9 @@ class Router(models.Model):
     hostname = models.CharField(max_length=100, default="Unknown")
     device_type = models.CharField(max_length=100, default="Unknown")
     ip_address = models.GenericIPAddressField(unique="True")
+    username = models.CharField(max_length=100, default="Unknown")
+    password = models.CharField(max_length=100, default="Unknown")
+    enable_password = models.CharField(max_length=100, default="Unknown")
 
 
 class User(AbstractUser):
