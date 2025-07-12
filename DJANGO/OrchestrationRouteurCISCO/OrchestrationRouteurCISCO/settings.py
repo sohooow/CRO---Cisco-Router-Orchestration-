@@ -10,26 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-ap#(^d&1e7r9%*bxw02@qd*hg7^zcik@o1++$k1g*d*5ph@1m^"
 
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "web"]
-
-
-# Application definition
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "web", "nginx"]
 
 INSTALLED_APPS = [
     "orchestration.apps.OrchestrationConfig",
@@ -66,7 +54,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -85,10 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "OrchestrationRouteurCISCO.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -100,12 +83,7 @@ DATABASES = {
     }
 }
 
-
 AUTH_USER_MODEL = "orchestration.User"
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -122,47 +100,31 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [
-    os.path.join(
-        BASE_DIR, "orchestration/static"
-    ),  # Spécifie où se trouvent les fichiers statiques
-]
-STATIC_ROOT = (
-    BASE_DIR / "staticfiles"
-)  # Dossier pour collecter les fichiers statiques lors de la collecte
-
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "orchestration" / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# Utilisation du modèle Utilisateur personnalisé
 AUTH_USER_MODEL = "orchestration.User"
-LOGIN_REDIRECT_URL = "/config"  # Page d'accueil ou page spécifique
-LOGOUT_REDIRECT_URL = "/"  # Page de connexion ou page d'accueil
-LOGIN_URL = "/"  # URL de la page de connexion
-LOGOUT_URL = "/logout/"  # URL de la page de déconnexion
+LOGIN_REDIRECT_URL = "/config"
+LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/"
+LOGOUT_URL = "/logout/"
 
 INTERNAL_IPS = [
-    "127.0.0.1",  # Localhost
+    "127.0.0.1",
 ]
 
 DEFAULT_ROUTER_IP = "172.16.10.11"
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://web",
+    "http://nginx",
+]

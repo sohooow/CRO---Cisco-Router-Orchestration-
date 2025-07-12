@@ -5,6 +5,7 @@ import os
 import re
 import sys
 
+import DJANGO.OrchestrationRouteurCISCO.cisco_config_tool as cisco_config_tool
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -19,8 +20,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-import ssh_tool
 
 from .forms import CustomAuthenticationForm, InterfaceForm, RouterForm, SubInterfaceForm
 from .models import Interface, Log, Router, User
@@ -61,13 +60,16 @@ def auth(request):
 def is_admin(user):
     return user.role == "admin"
 
+
 def user_is_readwrite(user):
-    return user.groups.filter(name='Read-write').exists()
+    return user.groups.filter(name="Read-write").exists()
 
 
 @login_required
 def config(request):
-    return render(request, 'config.html', {'is_readwrite': user_is_readwrite(request.user)})
+    return render(
+        request, "config.html", {"is_readwrite": user_is_readwrite(request.user)}
+    )
 
 
 # authentification des users
@@ -121,8 +123,8 @@ def validate_ip_and_mask(ip, mask):
 
 
 # Vue de configuration, accessible après authentification
-#@login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
-#def config(request):
+# @login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
+# def config(request):
 #   return render(request, "config.html")
 
 
@@ -130,7 +132,7 @@ def validate_ip_and_mask(ip, mask):
 def get_dynamic_output(request):
     try:
         # Récupération des données depuis SSH
-        output = ssh_tool.get_interfaces_details()
+        output = cisco_config_tool.get_interfaces_details()
 
         # Vérification si output est une liste
         if isinstance(output, list):
@@ -345,7 +347,9 @@ def get_router_data_and_save(request):
                     {"error": "Routeur introuvable dans la base de données"}, status=404
                 )
 
-            ssh_client = ssh_tool.SSHClient(router.ip, router.username, router.password)
+            ssh_client = cisco_config_tool.SSHClient(
+                router.ip, router.username, router.password
+            )
             output = ssh_client.execute_command("show ip interface brief")
 
             if not output:
@@ -491,7 +495,7 @@ class ModifySubInterface(View):
 
         # 2. Envoyer la config au routeur via SSH
         try:
-            output = ssh_tool.sendConfig(
+            output = cisco_config_tool.sendConfig(
                 interface_name, ip_address, subnet_mask, sub_interface, action, mode
             )
             return JsonResponse(
@@ -590,11 +594,15 @@ def get_interfaces_and_save(request):
                 return JsonResponse({"error": "Routeur introuvable"}, status=404)
 
             # Connexion SSH
-            ssh_client = ssh_tool.connect(router.ip, router.username, router.password)
+            ssh_client = cisco_config_tool.connect(
+                router.ip, router.username, router.password
+            )
 
             # Récupération des interfaces et masques via la commande 'show running-config'
-            output = ssh_tool.execute_command(ssh_client, "show running-config")
-            ssh_tool.disconnect(ssh_client)
+            output = cisco_config_tool.execute_command(
+                ssh_client, "show running-config"
+            )
+            cisco_config_tool.disconnect(ssh_client)
 
             # Parser les interfaces et les masques
             interfaces = parse_interfaces_and_masks(output)
@@ -695,6 +703,7 @@ class LogViewSet(viewsets.ModelViewSet):
 class InterfaceViewSet(viewsets.ModelViewSet):
     queryset = Interface.objects.all()
     serializer_class = InterfaceSerializer
+
 
 @login_required
 def add_subinterface(request, interface, ipaddress):

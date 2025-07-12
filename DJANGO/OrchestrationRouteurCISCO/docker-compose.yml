@@ -2,38 +2,25 @@ services:
   web:
     build: .
     container_name: orchestration
-    # En DEV :
-    # command: >
-    #   sh -c "
-    #     /wait-for-mysql.sh &&
-    #     python manage.py migrate --noinput &&
-    #     python manage.py runserver 0.0.0.0:8080
-    #   "
-
-    # En PROD :
     command: >
       sh -c "
         /wait-for-mysql.sh &&
         python manage.py migrate --noinput &&
-        gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8080 --workers 4
+        gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8000 --workers 4
       "
-
-    ports:
-      - "8080:8080"
-
+    expose:
+      - "8000"  # expose en interne uniquement, pas mappe vers l'extérieur
     depends_on:
       mysql_db:
         condition: service_healthy
-
     volumes:
       - .:/app
-      - ./nginx.conf:/etc/nginx/nginx.conf
-
     environment:
       - MYSQL_HOST=mysql_db
       - MYSQL_PORT=3306
       - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_DATABASE=orchestration_routeur
+
   mysql_db:
     image: mysql:8.0
     container_name: mysql_db
@@ -53,11 +40,10 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
-    ports:
-      - "80:80"
     depends_on:
       - web
+    ports:
+      - "8080:80"  # mappe port local 8080 vers port 80 nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./staticfiles:/staticfiles:ro
-      - ./media:/media:ro

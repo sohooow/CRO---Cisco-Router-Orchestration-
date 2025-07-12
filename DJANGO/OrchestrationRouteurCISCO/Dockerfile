@@ -33,19 +33,11 @@ RUN apt-get update && \
         nginx \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
-
 # Copier le fichier requirements.txt dans le conteneur
 COPY requirements.txt /app/
 
 # Installer les dépendances Python
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
-
-COPY wait-for-mysql.sh /wait-for-mysql.sh
-RUN chmod +x /wait-for-mysql.sh
-
-# Passer à l'utilisateur non privilégié
-USER appuser
 
 # Copier le reste du code source dans le conteneur
 COPY  . .
@@ -53,11 +45,17 @@ COPY  . .
 # Assurez-vous que les fichiers statiques sont collectés (si nécessaire)
 RUN python3 manage.py collectstatic --noinput || true
 
+COPY wait-for-mysql.sh /wait-for-mysql.sh
+RUN chmod +x /wait-for-mysql.sh
+
 # Copier la configuration Nginx dans le conteneur
-#COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
 
+RUN chown -R appuser:appuser /app/staticfiles
 
+# Passer à l'utilisateur non privilégié
+USER appuser
 
 
 # Exposer le port 8000 pour le serveur Django
