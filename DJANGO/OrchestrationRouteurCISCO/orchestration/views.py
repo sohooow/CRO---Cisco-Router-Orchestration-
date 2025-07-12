@@ -62,6 +62,13 @@ def is_admin(user):
     return user.role == "admin"
 
 
+@login_required
+def config(request):
+    groupes_utilisateur = request.user.groups.values_list('name', flat=True)
+    is_rw = 'Read-write' in groupes_utilisateur
+    return render(request, 'config.html', {'is_rw': is_rw})
+
+
 # authentification des users
 def login_view(request):
     if request.method == "POST":
@@ -113,9 +120,9 @@ def validate_ip_and_mask(ip, mask):
 
 
 # Vue de configuration, accessible après authentification
-@login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
-def config(request):
-    return render(request, "config.html")
+#@login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
+#def config(request):
+#   return render(request, "config.html")
 
 
 # Récupération dynamique des informations des interfaces via SSH
@@ -688,19 +695,24 @@ class InterfaceViewSet(viewsets.ModelViewSet):
     queryset = Interface.objects.all()
     serializer_class = InterfaceSerializer
 
-
+@login_required
 def add_subinterface(request, interface, ipaddress):
     interface_name = interface.split(".")[0]
+    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     data = {
         "interfaceName": interface_name,
         "subInterface": "",
         "ipAddress": ipaddress,
         "action": "Create",
+        "is_readwrite": is_readwrite,
     }
+
     return render(request, "subinterface_form_enabled.html", data)
 
 
+@login_required
 def update_subinterface(request, interface, ipaddress):
+    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -712,11 +724,13 @@ def update_subinterface(request, interface, ipaddress):
         "subInterface": sub_interface,
         "ipAddress": ipaddress,
         "action": "Update",
+        "is_readwrite": is_readwrite,
     }
     return render(request, "subinterface_form_enabled.html", data)
 
 
 def delete_subinterface(request, interface, ipaddress):
+    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -728,5 +742,6 @@ def delete_subinterface(request, interface, ipaddress):
         "subInterface": sub_interface,
         "ipAddress": ipaddress,
         "action": "Delete",
+        "is_readwrite": is_readwrite,
     }
     return render(request, "subinterface_form_enabled.html", data)

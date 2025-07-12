@@ -42,8 +42,14 @@
             <input class="form-check-input" type="radio" name="mode" id="radioNETCONF" value="netconf">
             <label class="form-check-label" for="radioNETCONF">NETCONF</label>
         </div>
-
+        {% if is_readwrite %}
         <button type="submit" class="btn btn-primary">Send</button>
+        {% else %}
+        <button type="submit" class="btn btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">
+            Send (Read Only)
+        </button>
+        {% endif %}
+
     </form>
 
     <div class="output" id="Output">
