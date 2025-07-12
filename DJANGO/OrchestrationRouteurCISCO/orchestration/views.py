@@ -61,12 +61,13 @@ def auth(request):
 def is_admin(user):
     return user.role == "admin"
 
+def user_is_readwrite(user):
+    return user.groups.filter(name='Read-write').exists()
+
 
 @login_required
 def config(request):
-    groupes_utilisateur = request.user.groups.values_list('name', flat=True)
-    is_rw = 'Read-write' in groupes_utilisateur
-    return render(request, 'config.html', {'is_rw': is_rw})
+    return render(request, 'config.html', {'is_readwrite': user_is_readwrite(request.user)})
 
 
 # authentification des users
@@ -698,20 +699,18 @@ class InterfaceViewSet(viewsets.ModelViewSet):
 @login_required
 def add_subinterface(request, interface, ipaddress):
     interface_name = interface.split(".")[0]
-    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     data = {
         "interfaceName": interface_name,
         "subInterface": "",
         "ipAddress": ipaddress,
         "action": "Create",
-        "is_readwrite": is_readwrite,
+        "is_readwrite": user_is_readwrite(request.user),
     }
     return render(request, "subinterface_form_add_update.html", data)
 
 
 @login_required
 def update_subinterface(request, interface, ipaddress):
-    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -723,13 +722,12 @@ def update_subinterface(request, interface, ipaddress):
         "subInterface": sub_interface,
         "ipAddress": ipaddress,
         "action": "Update",
-        "is_readwrite": is_readwrite,
+        "is_readwrite": user_is_readwrite(request.user),
     }
     return render(request, "subinterface_form_add_update.html", data)
 
 
 def delete_subinterface(request, interface, ipaddress):
-    is_readwrite = request.user.groups.filter(name="Read-write").exists()
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -741,6 +739,6 @@ def delete_subinterface(request, interface, ipaddress):
         "subInterface": sub_interface,
         "ipAddress": ipaddress,
         "action": "Delete",
-        "is_readwrite": is_readwrite,
+        "is_readwrite": user_is_readwrite(request.user),
     }
     return render(request, "subinterface_form_delete.html", data)
