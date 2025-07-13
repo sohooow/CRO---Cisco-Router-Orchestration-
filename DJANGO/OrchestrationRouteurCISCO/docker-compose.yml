@@ -15,17 +15,8 @@ services:
         condition: service_healthy
     volumes:
       - .:/app
-    environment:
-      - MYSQL_HOST=mysql_db
-      - MYSQL_PORT=3306
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=orchestration_routeur
-      - ROUTER_PASSWORD=c79e97SGVg7dc
-      - ROUTER_ENABLE_PASSWORD=Admin123INT
-      - SUPERADMIN_PASSWORD=admin123
-      - READWRITE_PASSWORD=test123
-      - READONLY_PASSWORD=test123
-      - USER_PASSWORD=user123
+    env_file:
+      - orchestration/.env
 
   mysql_db:
     image: mysql:8.0
