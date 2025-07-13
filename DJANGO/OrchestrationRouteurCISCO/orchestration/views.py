@@ -1,6 +1,4 @@
-import ipaddress
 import json
-import logging
 import os
 import re
 import sys
@@ -9,22 +7,18 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import cisco_config_tool 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.template import loader
-from django.test import Client
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
 
-from .forms import CustomAuthenticationForm, InterfaceForm, RouterForm, SubInterfaceForm
+
+from .forms import CustomAuthenticationForm, InterfaceForm
 from .models import Interface, Log, Router, User
-from .netconf_client import NetconfClient  # Adapte selon où est ton fichier
 from .serializersArti import (
     InterfaceSerializer,
     LogSerializer,
@@ -32,29 +26,9 @@ from .serializersArti import (
     UserSerializer,
 )
 
-# @csrf_exempt  # ATTENTION : Désactive temporairement la protection CSRF
-
-
-# Vue simple pour tester les méthodes GET et POST
-@api_view(["GET", "POST"])
-def my_view(request):
-    if request.method == "GET":
-        return Response({"message": "GET method is allowed now."})
-    elif request.method == "POST":
-        return Response({"message": "Data received"}, status=201)
-
-
-# Créez un logger
-logger = logging.getLogger(__name__)
 
 # Ajouter le répertoire parent de 'orchestration' au sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-
-# Fonction d'authentification
-def auth(request):
-    template = loader.get_template("auth.html")
-    return HttpResponse(template.render())
 
 
 # Décorateur pour vérifier si l'utilisateur est un admin
@@ -93,40 +67,6 @@ def login_view(request):
         form = CustomAuthenticationForm()
 
     return render(request, "login.html", {"form": form})
-
-
-# Vue protégée par un décorateur, accessible uniquement aux administrateurs
-# nécessaire ??
-@user_passes_test(is_admin)
-def add_router(request):
-    if request.method == "POST":
-        form = RouterForm(request.post)
-        if form.is_valid():
-            form.save()
-            return redirect("router_list")
-        else:
-            form = RouterForm()
-
-    return render(request, "add_router.html", {"form": form})
-
-
-# Fonction pour valider l'adresse IP et le masque de sous-réseau
-def validate_ip_and_mask(ip, mask):
-    """Valide l'adresse IP et le masque de sous-réseau."""
-    try:
-        ipaddress.IPv4Address(ip)  # Vérifie si l'IP est valide
-        ipaddress.IPv4Network(
-            f"{ip}/{mask}", strict=False
-        )  # Vérifie si le masque et l'IP sont valides ensemble
-    except ValueError:
-        return False
-    return True
-
-
-# Vue de configuration, accessible après authentification
-# @login_required  # décommenter @login_required pour sécuriser la page avec l'authentification
-# def config(request):
-#   return render(request, "config.html")
 
 
 # Récupération dynamique des informations des interfaces via SSH
@@ -193,111 +133,6 @@ def get_dynamic_output(request):
             status=500,
         )
 
-
-def netconf_action(request):
-    if request.method == "POST":
-        # 1. Récupérer les données du formulaire
-        interface_name = request.POST.get("interface_name")
-        ip_address = request.POST.get("ip_address")
-        subnet_mask = request.POST.get("subnet_mask")
-        sub_interface = request.POST.get("sub_interface")
-        action = request.POST.get("action")
-
-        # 2. Connexion NETCONF
-        client = NetconfClient()
-        mgr = client.connect()
-
-        if not mgr:
-            return render(
-                request, "error.html", {"error": "Connexion NETCONF impossible"}
-            )
-
-        response = None
-        try:
-            # 3. Effectuer l'action demandée
-            if action in ["Create", "Update"]:
-                full_interface_name = (
-                    f"{interface_name}.{sub_interface}"
-                    if sub_interface
-                    else interface_name
-                )
-                response = client.create_or_update_interface(
-                    interface_name=full_interface_name,
-                    vlan_id=sub_interface or "1",  # par défaut 1 si vide
-                    ip=ip_address,
-                    mask=subnet_mask,
-                )
-            elif action == "Delete":
-                full_interface_name = (
-                    f"{interface_name}.{sub_interface}"
-                    if sub_interface
-                    else interface_name
-                )
-                response = client.delete_interface(interface_name=full_interface_name)
-            else:
-                return render(request, "error.html", {"error": "Action inconnue"})
-
-        finally:
-            client.disconnect()
-
-        return render(request, "success.html", {"response": response})
-
-    return redirect("home")
-
-
-# Récupère et enregistre les données d'un routeur via NETCONF
-def get_router_data_and_save_netconf(request):
-    """Récupère les données d'un routeur (exemple d'interface) et les sauvegarde dans la base de données."""
-    if request.method == "POST":
-        try:
-            router_ip = request.POST.get("router_ip")
-
-            if not router_ip:
-                return JsonResponse(
-                    {"error": "L'IP du routeur est requise"}, status=400
-                )
-            router = Router.objects.filter(ip=router_ip).first()
-
-            if not router:
-                return JsonResponse(
-                    {"error": "Routeur introuvable dans la base de données"}, status=404
-                )
-            client = NetconfClient(router.ip, router.username, router.password)
-            client.connect()
-            interfaces = client.get_interfaces_details()
-            if not interfaces:
-                return JsonResponse(
-                    {"error": "Aucune donnée d'interface trouvée"}, status=500
-                )
-
-            for interface in interfaces:
-                interface_name = interface.get("interface")
-                ip_address = interface.get("ip_address")
-                subnet_mask = interface.get("subnet_mask")
-                status = interface.get("status", "inactive")
-
-                Interface.objects.create(
-                    router=router,
-                    name=interface_name,
-                    ip_address=ip_address,
-                    subnet_mask=subnet_mask,
-                    status=status,
-                )
-
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "message": "Interfaces récupérées et sauvegardées",
-                }
-            )
-
-        except Exception as e:
-            logger.error(
-                f"Erreur lors de la récupération des données du routeur: {str(e)}"
-            )
-            return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
-
-    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 
 # Fonction pour analyser la sortie d'une commande CLI et extraire les informations des interfaces
@@ -397,52 +232,6 @@ def get_router_data_and_save(request):
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
 
 
-# Vue pour gérer l'enregistrement de la configuration des interfaces réseau via JSON
-def orchestration_json(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)  # Charger les données JSON envoyées
-
-            # Extraire les informations
-            interface_name = data.get("interfaceName")
-            ip_address = data.get("ipAddress")
-            subnet_mask = data.get("subnetMask")
-            sub_interface = data.get("subInterface")
-            action = data.get("action")
-            mode = data.get("mode")
-
-            # Vérifier si toutes les données nécessaires sont présentes
-            if not all(
-                [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
-            ):
-                return JsonResponse(
-                    {"error": "Tous les champs sont requis"}, status=400
-                )
-
-            router = Router.objects.get(ip="172.16.10.11")
-
-            # Enregistrer l'interface dans la base de données
-            config, created = Interface.objects.update_or_create(
-                router=router,
-                name=interface_name,
-                defaults={
-                    "ip_address": ip_address,
-                    "subnet_mask": subnet_mask,
-                    "sub_interface": sub_interface,
-                    "status": action,
-                    "mode": mode,
-                },
-            )
-
-            return JsonResponse(
-                {"message": "Configuration enregistrée", "id": config.id}, status=201
-            )
-
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
-
-    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
-
 
 # Vue basée sur la classe View pour modifier la sous-interface
 @method_decorator(csrf_exempt, name="dispatch")
@@ -508,31 +297,6 @@ class ModifySubInterface(View):
             )
         except Exception as e:
             return JsonResponse({"error": f"Erreur SSH : {str(e)}"}, status=500)
-
-
-# Gestion de la base de donnnées
-def delete_router(request, router_ip):
-    """Supprimer un router par son adresse IP"""
-    if request.method == "DELETE":
-        # Essayer de récupérer le router avec l'adresse IP
-        try:
-            router = Router.objects.get(ip=router_ip)
-        except Router.DoesNotExist:
-            return JsonResponse(
-                {"error": f"Router avec l'IP {router_ip} non trouvé."}, status=404
-            )
-
-        try:
-            # Supprimer le router
-            router.delete()
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "message": f"Router avec IP {router.ip} supprimé avec succès.",
-                }
-            )
-        except Exception as e:
-            return JsonResponse({"error": f"Erreur: {str(e)}"}, status=500)
 
 
 def parse_interfaces_and_masks(output):

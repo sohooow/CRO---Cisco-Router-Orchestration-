@@ -1,6 +1,3 @@
-import debug_toolbar
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -29,7 +26,6 @@ urlpatterns = [
     path("config/", views.config, name="config"),
     path("dynamic-output/", views.get_dynamic_output, name="get_dynamic_output"),
     path("logout/", LogoutView.as_view(next_page="/"), name="logout"),
-    path("netconf-action/", views.netconf_action, name="netconf_action"),
     path("send-subinterface/", ModifySubInterface.as_view(), name="send_subinterface"),
     path("sync-router/", views.sync_router, name="sync-router"),
     path(

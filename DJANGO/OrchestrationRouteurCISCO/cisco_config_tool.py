@@ -33,7 +33,7 @@ def ssh_configure_netmiko(config_commands):
                 delay_factor=2,
             )
 
-        output_write = connection.send_command("write memory")
+        connection.send_command("write memory")
 
         connection.disconnect()
 
@@ -140,7 +140,7 @@ def sendConfig(
         try:
             output = ssh_configure_netmiko(config_commands)
 
-            refresh_output = get_interfaces_details()
+            get_interfaces_details()
 
             if output:
                 return output
@@ -188,7 +188,7 @@ def sendConfig(
 
 def get_interfaces_details():
     command = "show ip interface brief"
-    config_commands = ["show netconf-yang capabilities"]
+
     try:
         output = ssh_configure_netmiko(command)
 
