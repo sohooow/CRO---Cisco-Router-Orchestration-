@@ -156,14 +156,14 @@ def sendConfig(
                 if given_sub_interface
                 else given_interface_name
             )
-            vlan_id = "4"
+            
 
             if given_action == "Create" or given_action == "Update":
                 xml_payload = load_netconf_template(
                     "templates_netconf/create_update_interface_native.xml",
                     {
                         "interface_name": interface_name,
-                        "vlan_id": vlan_id,
+                        "vlan_id": given_sub_interface,
                         "ip": given_ip_address,
                         "mask": given_subnet_mask,
                     },
