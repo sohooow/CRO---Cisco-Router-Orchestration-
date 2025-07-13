@@ -14,6 +14,9 @@ docker compose exec web python manage.py makemigrations --noinput
 echo "Migration de la base de données..."
 docker compose exec web python manage.py migrate --noinput
 
+echo "Lancement du script de peuplement..."
+docker compose exec web python orchestration/init_data.py
+
 echo "Collecte des fichiers statiques..."
 docker compose exec web python manage.py collectstatic --noinput
 

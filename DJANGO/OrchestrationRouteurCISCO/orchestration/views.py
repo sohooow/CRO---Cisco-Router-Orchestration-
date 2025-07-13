@@ -4,8 +4,9 @@ import logging
 import os
 import re
 import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import DJANGO.OrchestrationRouteurCISCO.cisco_config_tool as cisco_config_tool
+import cisco_config_tool 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required, user_passes_test
