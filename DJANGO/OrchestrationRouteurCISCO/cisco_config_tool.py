@@ -40,11 +40,11 @@ def ssh_configure_netmiko(config_commands):
         return output
 
     except NetMikoAuthenticationException:
-        return "Erreur : Échec de l'authentification."
+        return "Error : Authentification failed."
     except NetMikoTimeoutException:
-        return "Erreur : Délai de connexion dépassé."
+        return "Error : Connection timed exceeded."
     except Exception as e:
-        return f"Erreur inattendue : {str(e)}"
+        return f"Unexcepted error : {str(e)}"
 
 
 def send_commit_rpc():
@@ -63,7 +63,7 @@ def send_commit_rpc():
             response = m.commit()
             return response.xml
     except Exception as e:
-        return f"Erreur lors du commit : {str(e)}"
+        return f"Error during the commit : {str(e)}"
 
 
 def load_netconf_template(template_path, variables: dict):
@@ -71,7 +71,7 @@ def load_netconf_template(template_path, variables: dict):
     full_path = os.path.join(base_dir, template_path)
 
     if not os.path.exists(full_path):
-        raise FileNotFoundError(f"Template introuvable : {full_path}")
+        raise FileNotFoundError(f"Template not found : {full_path}")
 
     with open(full_path, "r", encoding="utf-8") as f:
         template = f.read()
@@ -100,7 +100,7 @@ def ssh_configure_netconf(xml_payload):
             response = m.edit_config(target="candidate", config=config_element)
             return response.xml
     except Exception as e:
-        return f"Erreur NETCONF : {str(e)}"
+        return f" NETCONF error : {str(e)}"
 
 
 def sendConfig(
@@ -146,7 +146,7 @@ def sendConfig(
                 return output
 
         except Exception as e:
-            return {"error": f"Erreur dans orchestration(): {str(e)}"}
+            return {"error": f"Error in orchestration(): {str(e)}"}
 
     elif send_mode == "netconf":
         try:
@@ -174,7 +174,7 @@ def sendConfig(
                     {"interface_name": interface_name},
                 )
             else:
-                return {"error": "Action non valide pour netconf"}
+                return {"error": "Invalid action for NETCONF"}
 
             edit_result = ssh_configure_netconf(xml_payload)
 
@@ -183,7 +183,7 @@ def sendConfig(
             return {"edit-config": edit_result, "commit": commit_result}
 
         except Exception as e:
-            return {"error": f"Erreur NETCONF : {str(e)}"}
+            return {"error": f" NETCONF Error: {str(e)}"}
 
 
 def get_interfaces_details():
@@ -203,7 +203,7 @@ def get_interfaces_details():
 
         return output
     except Exception as e:
-        return {"error": f"Erreur dans refresh(): {str(e)}"}
+        return {"error": f"Error in refresh(): {str(e)}"}
 
 
 if __name__ == "__main__":
@@ -217,5 +217,5 @@ if __name__ == "__main__":
         given_action="Update",
         send_mode="netconf",
     )
-    print("\n===== Résultat NETCONF =====\n")
+    print("\n===== NETCONF Results =====\n")
     print(output)

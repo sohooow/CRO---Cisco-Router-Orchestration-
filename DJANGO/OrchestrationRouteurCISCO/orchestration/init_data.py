@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Ajouter le dossier racine (avec manage.py) dans sys.path
+#  Add the root folder (with manage.py) to sys.path
 racine = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(racine)
 
@@ -18,7 +18,7 @@ from orchestration.models import Router, Interface, User, Log
 
 
 
-#Récupération des variables d'environnement pour ne pas stocker en dur les mots de passe
+#Retrieve environment variables to avoid hardcoding passwords
 ROUTER_PASSWORD = os.getenv('ROUTER_PASSWORD', '')
 ROUTER_ENABLE_PASSWORD = os.getenv('ROUTER_ENABLE_PASSWORD', '')
 SUPERADMIN_PASSWORD = os.getenv('SUPERADMIN_PASSWORD', '')
@@ -29,7 +29,7 @@ USER_PASSWORD = os.getenv('USER_PASSWORD', '')
 
 User = get_user_model()
 
-# Création des groupes de permissions
+#  Create permission groups
 read_only_group, created = Group.objects.get_or_create(name="read-only")
 read_write_group, created = Group.objects.get_or_create(name="read-write")
 
@@ -51,7 +51,7 @@ for model in [Router, Interface, User, Log]:
 for model in [Router, Interface, User, Log]:
     add_view_perms(model, read_only_group)
 
-# Fonction pour création des users avec gestion des erreurs si user déjà existant 
+# Function to create users with error handling if user already exists 
 def create_user_if_not_exists(username, password, role, is_superuser=False, group=None):
     try:
         if not User.objects.filter(username=username).exists():
@@ -61,19 +61,19 @@ def create_user_if_not_exists(username, password, role, is_superuser=False, grou
                 user = User.objects.create_user(username=username, password=password, role=role)
             if group:
                 user.groups.add(group)
-            print(f"Utilisateur '{username}' créé.")
+            print(f"User '{username}' created.")
         else:
-            print(f"Utilisateur '{username}' existe déjà, création ignorée.")
+            print(f"User '{username}' already exists, creation skipped.")
     except IntegrityError:
-        print(f"Erreur : l'utilisateur '{username}' existe déjà (IntegrityError capturée).")
+        print(f"Error: user '{username}' already exists (IntegrityError captured).")
 
-# Création des utilisateurs
+#  Create users
 create_user_if_not_exists("superadmin", SUPERADMIN_PASSWORD, "admin", is_superuser=True, group=read_write_group)
 create_user_if_not_exists("readwrite", READWRITE_PASSWORD, "normal", group=read_write_group)
 create_user_if_not_exists("readonly", READONLY_PASSWORD, "normal", group=read_only_group)
 create_user_if_not_exists("user", USER_PASSWORD, "normal")
 
-# Création du routeur
+# Create router
 try:
     if not Router.objects.filter(ip_address="172.16.10.11").exists():
         Router.objects.create(
@@ -84,8 +84,8 @@ try:
             password=ROUTER_PASSWORD,
             enable_password=ROUTER_ENABLE_PASSWORD,
         )
-        print("Routeur 172.16.10.11 créé.")
+        print("Router 172.16.10.11 created.")
     else:
-        print("Routeur 172.16.10.11 existe déjà, création ignorée.")
+        print("Router 172.16.10.11 already exists, creation skipped.")
 except IntegrityError:
-    print("Erreur : le routeur 172.16.10.11 existe déjà (IntegrityError capturée).")
+    print("Error: router 172.16.10.11 already exists (IntegrityError captured).")

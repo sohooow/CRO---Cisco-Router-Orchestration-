@@ -3,7 +3,6 @@ from django.contrib.auth.admin import UserAdmin
 
 from .models import Interface, Log, Router, User
 
-# Register your models here.
 
 class RouterAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):

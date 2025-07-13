@@ -45,6 +45,3 @@ urlpatterns = [
     ),
 ]
 
-
-# Ajout du support des fichiers statiques
-# urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

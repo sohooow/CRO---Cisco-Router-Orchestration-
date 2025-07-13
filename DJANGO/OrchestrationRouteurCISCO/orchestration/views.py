@@ -27,11 +27,11 @@ from .serializersArti import (
 )
 
 
-# Ajouter le répertoire parent de 'orchestration' au sys.path
+# Add parent directory of 'orchestration' to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
-# Décorateur pour vérifier si l'utilisateur est un admin
+# Decorator to check if the user is an admin
 def is_admin(user):
     return user.role == "admin"
 
@@ -47,7 +47,7 @@ def config(request):
     )
 
 
-# authentification des users
+# User authentication
 def login_view(request):
     if request.method == "POST":
         form = CustomAuthenticationForm(request=request, data=request.POST)
@@ -60,22 +60,22 @@ def login_view(request):
                 login(request, user)
                 return redirect(
                     ""
-                )  # Rediriger vers une page d'accueil ou une page protégée
+                )  # Redirect to homepage or protected page
             else:
-                form.add_error(None, "Identifiants incorrects.")
+                form.add_error(None, "Incorrect credentials.")
     else:
         form = CustomAuthenticationForm()
 
     return render(request, "login.html", {"form": form})
 
 
-# Récupération dynamique des informations des interfaces via SSH
+# Dynamically fetch interface details via SSH
 def get_dynamic_output(request):
     try:
-        # Récupération des données depuis SSH
+        # Get data from SSH
         output = cisco_config_tool.get_interfaces_details()
 
-        # Vérification si output est une liste
+        # Check if output is a list
         if isinstance(output, list):
 
             filtered_output = [
@@ -121,9 +121,9 @@ def get_dynamic_output(request):
             )
             return HttpResponse(html_rows)
 
-        else:  # Cas d'erreur si output n'est pas une liste
+        else:  # Error case if output is not a list
             return HttpResponse(
-                '<tr><td colspan="4" class="text-danger">Erreur lors de la récupération des données</td></tr>',
+                '<tr><td colspan="4" class="text-danger">Error retrieving data</td></tr>',
                 status=500,
             )
 
@@ -135,20 +135,20 @@ def get_dynamic_output(request):
 
 
 
-# Fonction pour analyser la sortie d'une commande CLI et extraire les informations des interfaces
+# Function to parse CLI command output and extract interface info
 def parse_cli_output(output):
     """
-    Cette fonction prend en entrée la sortie d'une commande CLI et en extrait
-    les informations pertinentes sur les interfaces réseau du routeur.
-    Elle retourne une liste de dictionnaires avec le nom de l'interface, l'adresse IP, etc.
+    This function takes the output of a CLI command and extracts
+    relevant information about the router's network interfaces.
+    It returns a list of dictionaries with interface name, IP address, etc.
     """
-    # Expression régulière pour extraire les informations
+    # Regex pattern to extract information
     pattern = r"(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)"
 
-    # Trouver toutes les correspondances
+    # Find all matches
     matches = re.findall(pattern, output)
 
-    # Transformer chaque ligne en un dictionnaire
+    # Convert each line into a dictionary
     interfaces = []
     for match in matches:
         interface = {
@@ -162,11 +162,11 @@ def parse_cli_output(output):
     return interfaces
 
 
-# Récupère les données d'un routeur via SSH et les sauvegarde dans la base de données
+# Fetch router data via SSH and save it to the database
 def get_router_data_and_save(request):
     """
-    Se connecte à un routeur via SSH pour récupérer les informations des interfaces réseau,
-    puis enregistre ces données dans la base de données.
+    Connects to a router via SSH to retrieve interface details,
+    then saves that data to the database.
     """
     if request.method == "POST":
         try:
@@ -174,13 +174,13 @@ def get_router_data_and_save(request):
 
             if not router_ip:
                 return JsonResponse(
-                    {"error": "L'IP du routeur est requise"}, status=400
+                    {"error": "Router IP is required"}, status=400
                 )
 
             router = Router.objects.filter(ip=router_ip).first()
             if not router:
                 return JsonResponse(
-                    {"error": "Routeur introuvable dans la base de données"}, status=404
+                    {"error": "Router not found in database"}, status=404
                 )
 
             ssh_client = cisco_config_tool.SSHClient(
@@ -190,14 +190,14 @@ def get_router_data_and_save(request):
 
             if not output:
                 return JsonResponse(
-                    {"error": "Aucune donnée d'interface trouvée"}, status=500
+                    {"error": "No interface data found"}, status=500
                 )
 
             interfaces = parse_cli_output(output)
 
             if not interfaces:
                 return JsonResponse(
-                    {"error": "Aucune interface trouvée dans la sortie CLI"}, status=500
+                    {"error": "No interfaces found in CLI output"}, status=500
                 )
 
             for interface in interfaces:
@@ -205,7 +205,7 @@ def get_router_data_and_save(request):
                 ip_address = interface.get("ip_address")
                 subnet_mask = interface.get(
                     "subnet_mask", "255.255.255.0"
-                )  # Valeur par défaut si non fournie
+                )  # Default value if not provided
                 status = interface.get("status", "active")
 
                 Interface.objects.create(
@@ -219,28 +219,28 @@ def get_router_data_and_save(request):
             return JsonResponse(
                 {
                     "status": "success",
-                    "message": "Interfaces récupérées et sauvegardées",
+                    "message": "Interfaces retrieved and saved",
                 }
             )
 
         except Exception as e:
             logger.error(
-                f"Erreur lors de la récupération des données du routeur: {str(e)}"
+                f"Error retrieving router data: {str(e)}"
             )
             return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
 
-    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 
-# Vue basée sur la classe View pour modifier la sous-interface
+#Class-based view to modify a sub-interface
 @method_decorator(csrf_exempt, name="dispatch")
 class ModifySubInterface(View):
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Données JSON invalides"}, status=400)
+            return JsonResponse({"error": "Invalid JSON data"}, status=400)
 
         interface_name = data.get("interfaceName")
         ip_address = data.get("ipAddress")
@@ -259,9 +259,9 @@ class ModifySubInterface(View):
         if not all(
             [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
         ):
-            return JsonResponse({"error": "Tous les champs sont requis"}, status=400)
+            return JsonResponse({"error": "All fields are required"}, status=400)
 
-        # 1. Enregistrer en base via formulaire
+         # 1. Save to database via form
         form_data = {
             "name": interface_name,
             "ip_address": ip_address,
@@ -279,7 +279,7 @@ class ModifySubInterface(View):
                 interface.router = router
                 interface.save()
             except Router.DoesNotExist:
-                return JsonResponse({"error": "Routeur non trouvé"}, status=404)
+                return JsonResponse({"error": "Router not found"}, status=404)
         else:
             return JsonResponse({"error": form.errors}, status=400)
 
@@ -290,7 +290,7 @@ class ModifySubInterface(View):
             )
             return JsonResponse(
                 {
-                    "message": "Interface enregistrée et configuration envoyée au routeur.",
+                    "message": "Interface saved and configuration sent to router.",
                     "data": output,
                 },
                 status=201,
@@ -301,8 +301,8 @@ class ModifySubInterface(View):
 
 def parse_interfaces_and_masks(output):
     """
-    Parse le résultat de la commande 'show running-config' pour extraire les interfaces et leurs masques.
-    Retourne une liste de dictionnaires contenant 'name', 'ip', 'subnet_mask' et 'status'.
+    Parses the output of the 'show running-config' command to extract interfaces and masks.
+    Returns a list of dictionaries containing 'name', 'ip', 'subnet_mask', and 'status'.
     """
     interfaces = []
     lines = output.splitlines()
@@ -312,7 +312,7 @@ def parse_interfaces_and_masks(output):
     subnet_mask = None
 
     for line in lines:
-        # Extraction du nom de l'interface
+        # Extract interface name
         if line.strip().startswith("interface"):
             if iface_name:
                 interfaces.append(
@@ -322,16 +322,16 @@ def parse_interfaces_and_masks(output):
                         "subnet_mask": subnet_mask,
                         "status": "up",
                     }
-                )  # Statut par défaut
-            iface_name = line.split()[-1]  # Nom de l'interface, ex: GigabitEthernet0/1
+                )  # Default status
+            iface_name = line.split()[-1]  # Interface name, e.g. GigabitEthernet0/1
 
-        # Extraction de l'adresse IP et du masque de sous-réseau
+        # Extract IP address and subnet mask
         if "ip address" in line:
             parts = line.strip().split()
-            ip_address = parts[2]  # IP de l'interface, ex: 10.0.0.1
-            subnet_mask = parts[3]  # Masque de sous-réseau, ex: 255.255.255.0
+            ip_address = parts[2]  # Interface IP, e.g. 10.0.0.1
+            subnet_mask = parts[3]  # Subnet mask, e.g. 255.255.255.0
 
-    # Ajouter la dernière interface trouvée
+    #  Add the last found interface
     if iface_name:
         interfaces.append(
             {
@@ -346,59 +346,59 @@ def parse_interfaces_and_masks(output):
 
 
 def get_interfaces_and_save(request):
-    """Se connecter au routeur via SSH, récupérer les interfaces et les stocker en BDD."""
+    """Connect to the router via SSH, retrieve interfaces, and store them in the database."""
     if request.method == "POST":
         try:
-            # IP Management du routeur
+            #  Router management IP
             router_ip = settings.DEFAULT_ROUTER_IP
 
-            # Cherche le routeur en BDD
+            # Look for router in database
             try:
                 router = Router.objects.get(ip=router_ip)
             except Router.DoesNotExist:
-                return JsonResponse({"error": "Routeur introuvable"}, status=404)
+                return JsonResponse({"error": "Router not found"}, status=404)
 
-            # Connexion SSH
+            # SSH connection
             ssh_client = cisco_config_tool.connect(
                 router.ip, router.username, router.password
             )
 
-            # Récupération des interfaces et masques via la commande 'show running-config'
+            # Get interfaces and masks via 'show running-config' command
             output = cisco_config_tool.execute_command(
                 ssh_client, "show running-config"
             )
             cisco_config_tool.disconnect(ssh_client)
 
-            # Parser les interfaces et les masques
+            # Parse interfaces and masks
             interfaces = parse_interfaces_and_masks(output)
 
             if not interfaces:
-                return JsonResponse({"error": "Aucune interface trouvée"}, status=500)
+                return JsonResponse({"error": "No interfaces found"}, status=500)
 
-            # Supprimer les anciennes interfaces existantes
+            # Delete existing interfaces
             Interface.objects.filter(router=router).delete()
 
-            # Enregistrement des interfaces dans la base de données
+            # Save interfaces to the database
             for iface in interfaces:
                 Interface.objects.create(
                     router=router,
                     name=iface["name"],
                     ip_address=iface["ip"],
-                    subnet_mask=iface["subnet_mask"],  # Masque de sous-réseau récupéré
+                    subnet_mask=iface["subnet_mask"], 
                     status=iface["status"],
                 )
 
             return JsonResponse(
                 {
                     "status": "success",
-                    "message": f"{len(interfaces)} interfaces sauvegardées",
+                    "message": f"{len(interfaces)} interfaces saved",
                 }
             )
 
         except Exception as e:
-            return JsonResponse({"error": f"Erreur: {str(e)}"}, status=500)
+            return JsonResponse({"error": f"Error : {str(e)}"}, status=500)
 
-    return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+    return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 def sync_router(request):
@@ -415,7 +415,7 @@ def sync_router(request):
                 if len(parts) >= 4:
                     name = parts[0]
                     ip_address = parts[1]
-                    subnet_mask = "255.255.255.0"  # Valeur par défaut
+                    subnet_mask = "255.255.255.0"  # Default value
                     status = "active" if parts[2].lower() == "up" else "inactive"
 
                     Interface.objects.update_or_create(
@@ -441,10 +441,9 @@ def sync_router(request):
     )
 
 
-# Ajout des vues pour manipuler les modèles dans la base de données via l'API REST
+# Views to manipulate models in the database via the REST API
 
-
-# Vue personnalisée de login héritée de LoginView pour rediriger les utilisateurs authentifiés
+# Custom login view inherited from LoginView to redirect authenticated users
 class MyLoginView(LoginView):
     template_name = "registration/login.html"
     redirect_authenticated_user = True

@@ -1,21 +1,21 @@
-// Envoi de la data au back-end
+// Send data to the back-end
 document.getElementById('executeBtn').addEventListener('click', async function () {
-    await sendJsonData();  // Attendre la fin de sendJsonData()
-    loadDynamicData();  // Puis exécuter loadDynamicData()
+    await sendJsonData();  // Wait for sendJsonData() to finish
+    loadDynamicData();  // Then execute loadDynamicData()
 });
 
-async function sendJsonData(){
+async function sendJsonData() {
     const data = getData();
     if (!data) {
-        console.error("Données invalides, requête non envoyée");
+        console.error("Invalid data, request not sent");
         return;
     }
 
     console.log(data);
-    
-    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];  
+
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1];
     if (!csrfToken) {
-        console.error("Token CSRF introuvable !");
+        console.error("CSRF token not found!");
         return;
     }
 
@@ -32,26 +32,26 @@ async function sendJsonData(){
         });
 
         const result = await response.json();
-        console.log('Réponse du serveur:', result);
+        console.log('Server response:', result);
 
         if (result.error) {
-            output_body.textContent = result.error || "Erreur lors de l'exécution.";
+            output_body.textContent = result.error || "Error during execution.";
         } else {
-            output_body.textContent = result.message || "Action réussie.";
+            output_body.textContent = result.message || "Action successful.";
         }
 
     } catch (error) {
-        console.error('Erreur:', error);
-        output_body.textContent = "Erreur lors de l'exécution.";
+        console.error('Error:', error);
+        output_body.textContent = "Error during execution.";
     }
 }
 
 function printOutput() {
-    const output = `Commande exécutée : ${command} (${action})`;
+    const output = `Command executed: ${command} (${action})`;
     document.getElementById('cliOutput').textContent = output;
 }
 
-// Récupérer la data
+// Retrieve the data
 function getData() {
     const interfaceName = document.getElementById('interfaceName').value;
     const ipAddress = document.getElementById('ipAddress').value;
@@ -62,7 +62,7 @@ function getData() {
 
     const selectedRadio = document.querySelector('input[name="flexRadioDefault"]:checked');
 
-    // Vérifier quel radio est sélectionné et modifie le mode en fonction
+    // Check which radio is selected and update the mode accordingly
     if (selectedRadio) {
         if (selectedRadio.id === "flexRadioDefault1") {
             mode = "cli";
@@ -70,7 +70,7 @@ function getData() {
             mode = "netconf";
         }
     }
-    
+
     if (!interfaceName || !ipAddress || !subnetMask || !subInterface || !action || !mode) {
         console.error("Invalid data:", { interfaceName, ipAddress, subnetMask, subInterface, action, mode });
     }
@@ -81,100 +81,100 @@ function getData() {
         subnetMask: subnetMask,
         subInterface: subInterface,
         action: action,
-        mode : mode,
+        mode: mode,
     };
-    
+
     return JsonData;
 }
 
-// Fonction pour récupérer les interfaces dynamiquement
+// Function to fetch interfaces dynamically
 function loadDynamicData() {
-    
-    // Trouver le corps du tableau
+
+    // Find the table body
     const tbody = document.querySelector('#interfaceTable tbody');
-    
+
     tbody.innerHTML = '';
-    
-    // Afficher le spinner de chargement (remplacer le contenu par le spinner)
+
+    // Show the loading spinner (replace the content with the spinner)
     const loadingRow = document.getElementById('loadingRow');
-    loadingRow.style.display = 'table-row'; // Afficher le spinner
-    
-    // Effectuer une requête AJAX pour obtenir les données
+    loadingRow.style.display = 'table-row'; // Show the spinner
+
+    // Make an AJAX request to get the data
     fetch('/orchestration/dynamic-output/')
-    .then(response => response.json())  // Convertir la réponse en JSON
-    .then(data => {
-        // Masquer le spinner une fois les données chargées
-        loadingRow.style.display = 'none';
-        
-        if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
-            // Si les données sont présentes et sous forme de tableau non vide
-            data.data.forEach(interface => {
+        .then(response => response.json())  // Convert the response to JSON
+        .then(data => {
+            // Hide the spinner once the data is loaded
+            loadingRow.style.display = 'none';
 
-                if (interface.status.trim().toLowerCase() !== "deleted") {
+            if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+                // If data is available and it's a non-empty array
+                data.data.forEach(interface => {
 
+                    if (interface.status.trim().toLowerCase() !== "deleted") {
+
+                        const row = document.createElement('tr');
+
+                        // Create the table cells
+                        const cell1 = document.createElement('td');
+                        cell1.textContent = interface.interface || 'N/A';
+                        row.appendChild(cell1);
+
+                        const cell2 = document.createElement('td');
+                        cell2.textContent = interface.ip_address || 'N/A';
+                        row.appendChild(cell2);
+
+                        const cell3 = document.createElement('td');
+                        cell3.textContent = interface.status || 'N/A';
+                        row.appendChild(cell3);
+
+                        const cell4 = document.createElement('td');
+                        cell4.textContent = interface.proto || 'N/A';
+                        row.appendChild(cell4);
+
+                        // Add the row to the table
+                        tbody.appendChild(row);
+                    }
+                });
+            } else {
+                // If no data is available, show a message
                 const row = document.createElement('tr');
-                
-                // Création des cellules
-                const cell1 = document.createElement('td');
-                cell1.textContent = interface.interface || 'N/A';
-                row.appendChild(cell1);
-                
-                const cell2 = document.createElement('td');
-                cell2.textContent = interface.ip_address || 'N/A';
-                row.appendChild(cell2);
-                
-                const cell3 = document.createElement('td');
-                cell3.textContent = interface.status || 'N/A';
-                row.appendChild(cell3);
-                
-                const cell4 = document.createElement('td');
-                cell4.textContent = interface.proto || 'N/A';
-                row.appendChild(cell4);
-                
-                // Ajouter la ligne au tableau
+                const cell = document.createElement('td');
+                cell.setAttribute('colspan', '4');
+                cell.textContent = 'No data available (check VPN or internet connection)';
+                row.appendChild(cell);
                 tbody.appendChild(row);
-                }
-            });
-        } else {
-            // Si aucune donnée n'est disponible, afficher un message
+            }
+        })
+        .catch(error => {
+            console.error('Error while retrieving data:', error);
+
+            // Hide spinner in case of error
+            loadingRow.style.display = 'none';
+
+            // On network error, show error message
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.setAttribute('colspan', '4');
-            cell.textContent = 'Aucune donnée disponible (vérifiez le VPN ou la connexion internet)';
+            cell.textContent = 'Error while retrieving data. Please try again.';
             row.appendChild(cell);
             tbody.appendChild(row);
-        }
-    })
-    .catch(error => {
-        console.error('Erreur lors de la récupération des données:', error);
-        
-        // Masquer le spinner en cas d'erreur
-        loadingRow.style.display = 'none';
-        
-        // En cas d'erreur réseau, afficher un message d'erreur
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.setAttribute('colspan', '4');
-        cell.textContent = 'Erreur lors de la récupération des données. Veuillez réessayer.';
-        row.appendChild(cell);
-        tbody.appendChild(row);
-    });
+        });
 }
 
-// Associer la fonction au bouton "Rafraîchir"
+// Attach the function to the "Refresh" button
 document.getElementById('refresh').addEventListener('click', loadDynamicData);
 
-// Charger les données dynamiques lorsque la page est prête
+// Load dynamic data when the page is ready
 document.addEventListener('DOMContentLoaded', loadDynamicData);
 
 
 
-//soit framework côté client qui va communiquer en json avec le back(pas d'html), le fw s'occupe de faire les requetes
-//soit on utilise htmx, utiliser que de l'http et de l'html. envoi de formulaire au back, le back renvoie de l'html
-//réorganiser le front (les fichiers) et la discussion avec le serveur
+// Either a client-side framework that communicates with the back-end using JSON (no HTML), the framework handles the requests
+// Or use HTMX, only using HTTP and HTML. Send form data to the back-end, and the back-end returns HTML
+// Reorganize the front (file structure) and server communication
 
-//htmx : django renvoie le table dans la vue
+// HTMX: Django returns the table in the view
 
-//eviter les majuscules avec l'id
+// Avoid uppercase letters in element IDs
 
-//Connexion du back avec le front 
+// Connect the back-end with the front-end

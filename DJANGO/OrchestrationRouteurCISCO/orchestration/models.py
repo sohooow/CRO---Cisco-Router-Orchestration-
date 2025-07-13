@@ -14,8 +14,6 @@ class Router(models.Model):
 
 
 class User(AbstractUser):
-    # username = models.CharField(max_length=100, unique=True)
-    # password = models.CharField(max_length=100)
     ROLE_CHOICES = [
         ("admin", "Admin"),
         ("normal", "Normal"),

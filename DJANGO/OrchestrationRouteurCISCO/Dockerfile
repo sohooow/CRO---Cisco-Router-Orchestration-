@@ -3,14 +3,14 @@
 ARG PYTHON_VERSION=3.12.6
 FROM python:${PYTHON_VERSION}-slim as base
 
-# Prévenir la création de fichiers pyc et désactiver le buffering
+# Prevent creation of .pyc files and disable buffering
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Définir le répertoire de travail
+# Set working directory
 WORKDIR /app
 
-# Ajouter un utilisateur non privilégié
+# Add an unprivileged user
 ARG UID=10001
 RUN adduser \
     --disabled-password \
@@ -21,50 +21,50 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-# Installer les dépendances système nécessaires pour mysqlclient et autres bibliothèques
+# Install system dependencies needed for mysqlclient and other libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        netcat-openbsd \
-        libmariadb-dev \
-        gcc \
-        build-essential \
-        libffi-dev \
-        libssl-dev \
-        nginx \
+    netcat-openbsd \
+    libmariadb-dev \
+    gcc \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    nginx \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copier le fichier requirements.txt dans le conteneur
+# Copy requirements.txt into the container
 COPY requirements.txt /app/
 
-# Installer les dépendances Python
+# Install Python dependencies
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-# Copier le reste du code source dans le conteneur
+# Copy the rest of the source code into the container
 COPY  . .
 
-# Assurez-vous que les fichiers statiques sont collectés (si nécessaire)
+# Ensure static files are collected (if needed)
 RUN python3 manage.py collectstatic --noinput || true
 
 COPY wait-for-mysql.sh /wait-for-mysql.sh
 RUN chmod +x /wait-for-mysql.sh
 
-# Copier la configuration Nginx dans le conteneur
+# Copy Nginx configuration into the container
 COPY nginx.conf /etc/nginx/nginx.conf
 
-
+#Set file permissions for static files
 RUN chown -R appuser:appuser /app/staticfiles
 
-# Passer à l'utilisateur non privilégié
+# Switch to the unprivileged user
 USER appuser
 
 
-# Exposer le port 8000 pour le serveur Django
+# Expose port 8080 for the Django server
 EXPOSE 8080 
 #EXPOSE 8000 8000
 
-# Commande de démarrage DEV
+# DEV startup command
 #CMD ["python", "manage.py", "runserver", "0.0.0.0:8080"]
 
-# Commande de démarrage PROD
+# PROD startup command
 CMD service nginx start && gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8080 --workers 4
 

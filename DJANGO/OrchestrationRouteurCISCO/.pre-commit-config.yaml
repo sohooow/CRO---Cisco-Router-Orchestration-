@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 25.1.0  # vérifie la dernière version stable sur GitHub
+    rev: 25.1.0  # Check the latest stable version on GitHub.
     hooks:
       - id: black
 

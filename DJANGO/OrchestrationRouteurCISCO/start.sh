@@ -1,23 +1,23 @@
 #!/bin/bash
 
-echo "Lancement de l'environnement Docker..."
+echo "Starting the Docker environment..."
 
 docker compose build
 docker compose up -d
 
-echo "Attente de la base de données..."
+echo "Waiting for the database..."
 sleep 10
 
-echo "Création automatique des fichiers de migrations..."
+echo "Automatically creating migration files..."
 docker compose exec web python manage.py makemigrations --noinput
 
-echo "Migration de la base de données..."
+echo "Applying database migrations..."
 docker compose exec web python manage.py migrate --noinput
 
-echo "Lancement du script de peuplement..."
+echo "Running the data population script..."
 docker compose exec web python orchestration/init_data.py
 
-echo "Collecte des fichiers statiques..."
+echo "Collecting static files..."
 docker compose exec web python manage.py collectstatic --noinput
 
-echo "Serveur prêt sur http://localhost:8080"
+echo "Server is ready at http://localhost:8080"
