@@ -5,17 +5,17 @@ from ncclient import manager
 from netmiko import ConnectHandler
 from netmiko.exceptions import NetMikoAuthenticationException, NetMikoTimeoutException
 
-host = "172.16.10.11"
-username = "admin"
-password = "c79e97SGVg7dc"
-enable = "Admin123INT"
+ROUTER_HOST = os.getenv("ROUTER_HOST")
+ROUTER_USER = os.getenv("ROUTER_USER")
+ROUTER_PASS = os.getenv("ROUTER_PASS")
+ROUTER_ENABLE_PASSWORD = os.getenv("ROUTER_ENABLE_PASSWORD")
 
 device = {
     "device_type": "cisco_ios",
-    "host": host,
-    "username": username,
-    "password": password,
-    "secret": enable,
+    "host": ROUTER_HOST,
+    "username": ROUTER_USER,
+    "password": ROUTER_PASS,
+    "secret": ROUTER_ENABLE_PASSWORD,
 }
 
 
@@ -28,10 +28,7 @@ def ssh_configure_netmiko(config_commands):
         if isinstance(config_commands, str):
             output = connection.send_command(config_commands, use_textfsm=True)
         else:
-            output = connection.send_config_set(
-                config_commands,
-                delay_factor=2,
-            )
+            output = connection.send_config_set(config_commands, delay_factor=2)
 
         connection.send_command("write memory")
 
@@ -156,7 +153,6 @@ def sendConfig(
                 if given_sub_interface
                 else given_interface_name
             )
-            
 
             if given_action == "Create" or given_action == "Update":
                 xml_payload = load_netconf_template(
@@ -204,18 +200,3 @@ def get_interfaces_details():
         return output
     except Exception as e:
         return {"error": f"Error in refresh(): {str(e)}"}
-
-
-if __name__ == "__main__":
-    output = get_interfaces_details()
-    print(output)
-    output = sendConfig(
-        given_interface_name="GigabitEthernet2",
-        given_ip_address="192.168.27.2",
-        given_subnet_mask="255.255.255.0",
-        given_sub_interface="7",
-        given_action="Update",
-        send_mode="netconf",
-    )
-    print("\n===== NETCONF Results =====\n")
-    print(output)

@@ -44,4 +44,3 @@ urlpatterns = [
         name="delete_subinterface",
     ),
 ]
-

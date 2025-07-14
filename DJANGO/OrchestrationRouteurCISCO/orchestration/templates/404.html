@@ -5,15 +5,21 @@
     <meta charset="UTF-8">
     <title>Page not found</title>
     {% load static %}
-    <!-- Lier le fichier CSS -->
     <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
+    <script src="{% static 'js/script.js' %}" defer></script>
 </head>
 
 <body class="error-page error-404">
-    <div class="container">
-        <h1>Error 404</h1>
-        <p>The page you’re looking for doesn’t exist.</p>
-        <a href="/">Back to home</a>
+    <div class="container fade-in-container">
+        <div class="error-container">
+            <div class="lottie-animation"></div>
+            <div class="error-content">
+                <h1>404</h1>
+                <p>The page you’re looking for doesn’t exist.</p>
+                <a href="/" class="btn btn-primary">Back to home</a>
+            </div>
+        </div>
     </div>
 </body>
 

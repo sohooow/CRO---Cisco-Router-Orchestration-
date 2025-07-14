@@ -1,87 +1,77 @@
 body {
-	font-family: 'Roboto', sans-serif;
-	background-color: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
 }
 
-.auth-container{
-	max-width: 400px;
-	margin: 50px auto;
-	background-color: #ffffff; /* White background for form */
-	padding: 30px;
-	border-radius: 10px;
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
 }
 
 .header-container {
-	text-align: center;
-	padding: 20px;
-	background-color: #1C6CC8;
-	color: white;
-	margin-bottom: 20px;
-	border-radius: 10px 10px 0 0;
+    text-align: center;
+    padding: 20px;
+    background-color: #1C6CC8;
+    color: white;
+    margin-bottom: 20px;
+    border-radius: 10px 10px 0 0;
 }
 
 .command-container {
-	max-width: 800px;
-	margin: 30px auto;
-	background-color: #ffffff;
-	padding: 30px;
-	border-radius: 10px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 30px auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 #Output {
-	background-color: #000000;
-	color: #2bf44d;
-	padding: 15px;
-	border-radius: 5px;
-	font-family: 'Courier New', Courier, monospace;
-	min-height: 150px;
-	margin-top: 20px;
+    background-color: #000000;
+    color: #2bf44d;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', Courier, monospace;
+    min-height: 150px;
+    margin-top: 20px;
 }
 
-.btn-mode-cli {
-	background-color: #2e0fe1;
-	color: white;
-	margin : 5px 0;
+.btn-mode-cli, .btn-mode-netconf, .btn-execute {
+    color: white;
+    margin: 5px 0;
 }
-
-.btn-mode-netconf {
-	background-color: #036f23;
-	color: white;
-	margin : 5px 0;
-}
-
-.btn-execute {
-	background-color: #1C6CC8;
-	color: white;
-	margin : 5px 0;
-}
+.btn-mode-cli { background-color: #2e0fe1; }
+.btn-mode-netconf { background-color: #036f23; }
+.btn-execute { background-color: #1C6CC8; }
 
 .cli-error, .netconf-error {
-	background-color: #f8d7da;
-	color: #721c24;
-	padding: 10px;
-	margin-top: 20px;
-	border-radius: 5px;
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    margin-top: 20px;
+    border-radius: 5px;
 }
 
 table {
-	width: 100%;
-	border-collapse: collapse;
+    width: 100%;
+    border-collapse: collapse;
 }
 th, td {
-	padding: 8px 12px;
-	text-align: left;
-	border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #ddd;
 }
 th {
-	background-color: #f2f2f2;
+    background-color: #f2f2f2;
 }
 tr:hover {
-	background-color: #f5f5f5;
+    background-color: #f5f5f5;
 }
 #loadingRow {
-    display: none; /* Par défaut, le spinner est masqué */
+    display: none;
 }
 .spinner-border {
     display: inline-block !important;
@@ -91,32 +81,35 @@ tr:hover {
     color: #007bff;
 }
 
-.error-page {
+.error-page, .error-container {
     background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 70vh;
     margin: 0;
+    padding: 2rem;
 }
 
-.error-page .container {
+.error-page .container, .error-content {
     text-align: center;
 }
 
-.error-page h1 {
-    font-size: 8rem;
-    margin: 0;
+.error-page h1, .error-content h1 {
+    font-size: 6rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
     color: #343a40;
 }
 
-.error-page p {
+.error-page p, .error-content p {
     font-size: 1.5rem;
     color: #6c757d;
+    margin-bottom: 2rem;
 }
 
-.error-page a {
+.error-page a, .error-content a {
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
@@ -127,27 +120,23 @@ tr:hover {
     transition: background-color 0.3s;
 }
 
-.error-page a:hover {
+.error-page a:hover, .error-content a:hover {
     background-color: #0056b3;
 }
 
 .error-500 {
     background-color: #fff3cd;
 }
-
 .error-500 h1, .error-500 p, .error-500 a {
     color: #856404;
 }
-
 .error-500 a {
     background-color: #856404;
 }
-
 .error-500 a:hover {
     background-color: #704c00;
 }
 
-/* Animation fade-in */
 @keyframes fadeIn {
     0% {
         opacity: 0;
@@ -159,7 +148,11 @@ tr:hover {
     }
 }
 
-.error-page .container {
+.error-page .fade-in-container {
     animation: fadeIn 1s ease-out;
 }
 
+.lottie-animation {
+  max-width: 400px;
+  margin-bottom: 2rem;
+}
