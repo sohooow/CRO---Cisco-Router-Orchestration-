@@ -1,8 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-# Modèle Routeur et Interfaces
-
 
 class Router(models.Model):
     hostname = models.CharField(max_length=100, default="Unknown")
