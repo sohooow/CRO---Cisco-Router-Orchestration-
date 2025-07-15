@@ -42,9 +42,6 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the source code into the container
 COPY  . .
 
-# Ensure static files are collected (if needed)
-RUN python3 manage.py collectstatic --noinput || true
-
 COPY wait-for-mysql.sh /wait-for-mysql.sh
 RUN chmod +x /wait-for-mysql.sh
 

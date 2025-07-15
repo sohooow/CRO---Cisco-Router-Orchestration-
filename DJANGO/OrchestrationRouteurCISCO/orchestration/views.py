@@ -2,9 +2,9 @@ import json
 import os
 import re
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import cisco_config_tool 
 from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
@@ -16,6 +16,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 
+import cisco_config_tool
 
 from .forms import CustomAuthenticationForm, InterfaceForm
 from .models import Interface, Log, Router, User
@@ -25,7 +26,6 @@ from .serializersArti import (
     RouterSerializer,
     UserSerializer,
 )
-
 
 # Add parent directory of 'orchestration' to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -58,9 +58,7 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
-                return redirect(
-                    ""
-                )  # Redirect to homepage or protected page
+                return redirect("")  # Redirect to homepage or protected page
             else:
                 form.add_error(None, "Incorrect credentials.")
     else:
@@ -134,7 +132,6 @@ def get_dynamic_output(request):
         )
 
 
-
 # Function to parse CLI command output and extract interface info
 def parse_cli_output(output):
     """
@@ -173,9 +170,7 @@ def get_router_data_and_save(request):
             router_ip = request.POST.get("router_ip")
 
             if not router_ip:
-                return JsonResponse(
-                    {"error": "Router IP is required"}, status=400
-                )
+                return JsonResponse({"error": "Router IP is required"}, status=400)
 
             router = Router.objects.filter(ip=router_ip).first()
             if not router:
@@ -189,9 +184,7 @@ def get_router_data_and_save(request):
             output = ssh_client.execute_command("show ip interface brief")
 
             if not output:
-                return JsonResponse(
-                    {"error": "No interface data found"}, status=500
-                )
+                return JsonResponse({"error": "No interface data found"}, status=500)
 
             interfaces = parse_cli_output(output)
 
@@ -224,16 +217,13 @@ def get_router_data_and_save(request):
             )
 
         except Exception as e:
-            logger.error(
-                f"Error retrieving router data: {str(e)}"
-            )
+            logger.error(f"Error retrieving router data: {str(e)}")
             return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-
-#Class-based view to modify a sub-interface
+# Class-based view to modify a sub-interface
 @method_decorator(csrf_exempt, name="dispatch")
 class ModifySubInterface(View):
     def post(self, request, *args, **kwargs):
@@ -261,9 +251,9 @@ class ModifySubInterface(View):
         ):
             return JsonResponse({"error": "All fields are required"}, status=400)
 
-         # 1. Save to database via form
+        # 1. Save to database via form
         form_data = {
-            "name": interface_name,
+            "name": interface_name + "." + sub_interface,
             "ip_address": ip_address,
             "subnet_mask": subnet_mask,
             "status": "active" if action == "1" else "inactive",
@@ -283,7 +273,7 @@ class ModifySubInterface(View):
         else:
             return JsonResponse({"error": form.errors}, status=400)
 
-        # 2. Envoyer la config au routeur via SSH
+        # 2. Send config to router via SSH
         try:
             output = cisco_config_tool.sendConfig(
                 interface_name, ip_address, subnet_mask, sub_interface, action, mode
@@ -384,7 +374,7 @@ def get_interfaces_and_save(request):
                     router=router,
                     name=iface["name"],
                     ip_address=iface["ip"],
-                    subnet_mask=iface["subnet_mask"], 
+                    subnet_mask=iface["subnet_mask"],
                     status=iface["status"],
                 )
 
@@ -443,6 +433,7 @@ def sync_router(request):
 
 # Views to manipulate models in the database via the REST API
 
+
 # Custom login view inherited from LoginView to redirect authenticated users
 class MyLoginView(LoginView):
     template_name = "registration/login.html"
@@ -500,6 +491,7 @@ def update_subinterface(request, interface, ipaddress):
     return render(request, "subinterface_form_add_update.html", data)
 
 
+@login_required
 def delete_subinterface(request, interface, ipaddress):
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
