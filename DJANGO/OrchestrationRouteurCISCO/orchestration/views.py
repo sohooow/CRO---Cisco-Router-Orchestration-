@@ -31,6 +31,10 @@ from .serializersArti import (
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
+ROUTER_HOST = os.getenv("ROUTER_HOST")
+INTERFACES_LIST = os.getenv("INTERFACES_LIST")
+
+
 # Decorator to check if the user is an admin
 def is_admin(user):
     return user.role == "admin"
@@ -217,8 +221,9 @@ def get_router_data_and_save(request):
             )
 
         except Exception as e:
-            logger.error(f"Error retrieving router data: {str(e)}")
-            return JsonResponse({"error": f"Erreur serveur: {str(e)}"}, status=500)
+            return JsonResponse(
+                {"error": f"Internal server error: {str(e)}"}, status=500
+            )
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
@@ -265,7 +270,7 @@ class ModifySubInterface(View):
             interface = form.save(commit=False)
 
             try:
-                router = Router.objects.get(ip_address="172.16.10.11")
+                router = Router.objects.get(ip_address=ROUTER_HOST)
                 interface.router = router
                 interface.save()
             except Router.DoesNotExist:
@@ -312,14 +317,14 @@ def parse_interfaces_and_masks(output):
                         "subnet_mask": subnet_mask,
                         "status": "up",
                     }
-                )  # Default status
-            iface_name = line.split()[-1]  # Interface name, e.g. GigabitEthernet0/1
+                )
+            iface_name = line.split()[-1]
 
         # Extract IP address and subnet mask
         if "ip address" in line:
             parts = line.strip().split()
-            ip_address = parts[2]  # Interface IP, e.g. 10.0.0.1
-            subnet_mask = parts[3]  # Subnet mask, e.g. 255.255.255.0
+            ip_address = parts[2]
+            subnet_mask = parts[3]
 
     #  Add the last found interface
     if iface_name:
@@ -353,7 +358,7 @@ def get_interfaces_and_save(request):
                 router.ip, router.username, router.password
             )
 
-            # Get interfaces and masks via 'show running-config' command
+            # Get interfaces and masks
             output = cisco_config_tool.execute_command(
                 ssh_client, "show running-config"
             )
@@ -393,10 +398,10 @@ def get_interfaces_and_save(request):
 
 def sync_router(request):
     if request.method == "POST":
-        router_ip = request.POST.get("router_ip", "172.16.10.11")
+        router_ip = request.POST.get("router_ip", ROUTER_HOST)
         router, created = Router.objects.get_or_create(ip_address=router_ip)
 
-        response = request.get("http://localhost:8080/dynamic-output/")
+        response = request.get(INTERFACES_LIST)
 
         if response.status_code == 200:
             data = response.text.strip().split("\n")
