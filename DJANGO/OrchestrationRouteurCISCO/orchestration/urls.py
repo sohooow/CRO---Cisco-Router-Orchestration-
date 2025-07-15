@@ -9,18 +9,18 @@ from .views import (
     MyLoginView,
     RouterViewSet,
     UserViewSet,
+    error_500_view,
     logout_view,
 )
 
-# Router for the API REST
+# API REST router registration
 router = DefaultRouter()
 router.register(r"routers", RouterViewSet)
 router.register(r"logs", LogViewSet)
 router.register(r"interfaces", InterfaceViewSet)
 router.register(r"users", UserViewSet)
 
-
-# Inclusion of API REST under `/api/`
+# URL patterns for the application
 urlpatterns = [
     path("api/", include(router.urls)),
     path("", MyLoginView.as_view(), name="login"),
@@ -44,4 +44,5 @@ urlpatterns = [
         views.delete_subinterface,
         name="delete_subinterface",
     ),
+    path("500/", error_500_view, name="error_500"),
 ]

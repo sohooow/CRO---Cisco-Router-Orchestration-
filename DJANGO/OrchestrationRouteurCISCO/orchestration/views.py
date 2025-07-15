@@ -3,8 +3,6 @@ import os
 import re
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -31,29 +29,30 @@ from .serializersArti import (
 # Add parent directory of 'orchestration' to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
 ROUTER_HOST = os.getenv("ROUTER_HOST")
 INTERFACES_LIST = os.getenv("INTERFACES_LIST")
 
 
-# Decorator to check if the user is an admin
 def is_admin(user):
+    """Check if the user has admin role."""
     return user.role == "admin"
 
 
 def user_is_readwrite(user):
+    """Check if the user belongs to the read-write group."""
     return user.groups.filter(name="Read-write").exists()
 
 
 @login_required
 def config(request):
+    """Render the main configuration page."""
     return render(
         request, "config.html", {"is_readwrite": user_is_readwrite(request.user)}
     )
 
 
-# User authentication
 def login_view(request):
+    """Handle user login."""
     if request.method == "POST":
         form = CustomAuthenticationForm(request=request, data=request.POST)
         if form.is_valid():
@@ -72,15 +71,12 @@ def login_view(request):
     return render(request, "login.html", {"form": form})
 
 
-# Dynamically fetch interface details via SSH
 def get_dynamic_output(request):
+    """Fetch interface details via SSH and return HTML rows or redirect to 500 error page on failure."""
     try:
-        # Get data from SSH
         output = cisco_config_tool.get_interfaces_details()
 
-        # Check if output is a list
         if isinstance(output, list):
-
             filtered_output = [
                 item
                 for item in output
@@ -124,33 +120,25 @@ def get_dynamic_output(request):
             )
             return HttpResponse(html_rows)
 
-        else:  # Error case if output is not a list
-            return HttpResponse(
-                '<tr><td colspan="4" class="text-danger">Error retrieving data</td></tr>',
-                status=500,
-            )
+        # Si le résultat n’est pas une liste, on considère qu’il y a une erreur
+        response = HttpResponse("", status=500)
+        response["HX-Redirect"] = "/500/"
+        return response
 
     except Exception as e:
-        return HttpResponse(
-            f'<tr><td colspan="4" class="text-danger">Erreur: {str(e)}</td></tr>',
-            status=500,
-        )
+        print(f"Erreur dans get_dynamic_output: {e}")
+        response = HttpResponse("", status=500)
+        response["HX-Redirect"] = "/500/"
+        return response
 
 
-# Function to parse CLI command output and extract interface info
 def parse_cli_output(output):
     """
-    This function takes the output of a CLI command and extracts
-    relevant information about the router's network interfaces.
-    It returns a list of dictionaries with interface name, IP address, etc.
+    Parse CLI command output and extract interface information.
+    Returns a list of dictionaries with interface details.
     """
-    # Regex pattern to extract information
     pattern = r"(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)"
-
-    # Find all matches
     matches = re.findall(pattern, output)
-
-    # Convert each line into a dictionary
     interfaces = []
     for match in matches:
         interface = {
@@ -160,15 +148,13 @@ def parse_cli_output(output):
             "status": match[4],
         }
         interfaces.append(interface)
-
     return interfaces
 
 
-# Fetch router data via SSH and save it to the database
 def get_router_data_and_save(request):
     """
-    Connects to a router via SSH to retrieve interface details,
-    then saves that data to the database.
+    Connect to a router via SSH to retrieve interface details,
+    then save that data to the database.
     """
     if request.method == "POST":
         try:
@@ -201,9 +187,7 @@ def get_router_data_and_save(request):
             for interface in interfaces:
                 interface_name = interface.get("name")
                 ip_address = interface.get("ip_address")
-                subnet_mask = interface.get(
-                    "subnet_mask", "255.255.255.0"
-                )  # Default value if not provided
+                subnet_mask = interface.get("subnet_mask", "255.255.255.0")
                 status = interface.get("status", "active")
 
                 Interface.objects.create(
@@ -229,9 +213,12 @@ def get_router_data_and_save(request):
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
-# Class-based view to modify a sub-interface
 @method_decorator(csrf_exempt, name="dispatch")
 class ModifySubInterface(View):
+    """
+    Handle add, update, and delete operations for sub-interfaces.
+    """
+
     def post(self, request, *args, **kwargs):
         try:
             data = json.loads(request.body)
@@ -285,13 +272,13 @@ class ModifySubInterface(View):
                 status=201,
             )
         except Exception as e:
-            return JsonResponse({"error": f"Erreur SSH : {str(e)}"}, status=500)
+            return JsonResponse({"error": f"SSH error: {str(e)}"}, status=500)
 
 
 def parse_interfaces_and_masks(output):
     """
-    Parses the output of the 'show running-config' command to extract interfaces and masks.
-    Returns a list of dictionaries containing 'name', 'ip', 'subnet_mask', and 'status'.
+    Parse the output of 'show running-config' to extract interfaces and masks.
+    Returns a list of dictionaries with interface details.
     """
     interfaces = []
     lines = output.splitlines()
@@ -335,30 +322,26 @@ def parse_interfaces_and_masks(output):
 
 
 def get_interfaces_and_save(request):
-    """Connect to the router via SSH, retrieve interfaces, and store them in the database."""
+    """
+    Connect to the router via SSH, retrieve interfaces, and store them in the database.
+    """
     if request.method == "POST":
         try:
-            #  Router management IP
             router_ip = settings.DEFAULT_ROUTER_IP
-
-            # Look for router in database
             try:
                 router = Router.objects.get(ip=router_ip)
             except Router.DoesNotExist:
                 return JsonResponse({"error": "Router not found"}, status=404)
 
-            # SSH connection
             ssh_client = cisco_config_tool.connect(
                 router.ip, router.username, router.password
             )
 
-            # Get interfaces and masks
             output = cisco_config_tool.execute_command(
                 ssh_client, "show running-config"
             )
             cisco_config_tool.disconnect(ssh_client)
 
-            # Parse interfaces and masks
             interfaces = parse_interfaces_and_masks(output)
 
             if not interfaces:
@@ -383,14 +366,16 @@ def get_interfaces_and_save(request):
                     "message": f"{len(interfaces)} interfaces saved",
                 }
             )
-
         except Exception as e:
-            return JsonResponse({"error": f"Error : {str(e)}"}, status=500)
+            return JsonResponse({"error": f"Error: {str(e)}"}, status=500)
 
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
 
 def sync_router(request):
+    """
+    Synchronize the router's interface list with the database.
+    """
     if request.method == "POST":
         router_ip = request.POST.get("router_ip", ROUTER_HOST)
         router, created = Router.objects.get_or_create(ip_address=router_ip)
@@ -404,7 +389,7 @@ def sync_router(request):
                 if len(parts) >= 4:
                     name = parts[0]
                     ip_address = parts[1]
-                    subnet_mask = "255.255.255.0"  # Default value
+                    subnet_mask = "255.255.255.0"
                     status = "active" if parts[2].lower() == "up" else "inactive"
 
                     Interface.objects.update_or_create(
@@ -430,11 +415,12 @@ def sync_router(request):
     )
 
 
-# Views to manipulate models in the database via the REST API
+# REST API views
 
 
-# Custom login view inherited from LoginView to redirect authenticated users
 class MyLoginView(LoginView):
+    """Custom login view that redirects authenticated users."""
+
     template_name = "login.html"
     redirect_authenticated_user = True
 
@@ -461,6 +447,7 @@ class InterfaceViewSet(viewsets.ModelViewSet):
 
 @login_required
 def add_subinterface(request, interface, ipaddress):
+    """Render the form to add a sub-interface."""
     interface_name = interface.split(".")[0]
     data = {
         "interfaceName": interface_name,
@@ -474,6 +461,7 @@ def add_subinterface(request, interface, ipaddress):
 
 @login_required
 def update_subinterface(request, interface, ipaddress):
+    """Render the form to update a sub-interface."""
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -492,6 +480,7 @@ def update_subinterface(request, interface, ipaddress):
 
 @login_required
 def delete_subinterface(request, interface, ipaddress):
+    """Render the form to delete a sub-interface."""
     if "." in interface:
         interface_name, sub_interface = interface.split(".", 1)
     else:
@@ -510,7 +499,12 @@ def delete_subinterface(request, interface, ipaddress):
 
 @require_POST
 def logout_view(request):
+    """Handle logout via HTMX POST request."""
     if request.headers.get("Hx-Request") != "true":
         return JsonResponse({"error": "Invalid HTMX request"}, status=400)
     logout(request)
     return JsonResponse({"redirect": "/"})
+
+
+def error_500_view(request):
+    return render(request, "500.html", status=500)

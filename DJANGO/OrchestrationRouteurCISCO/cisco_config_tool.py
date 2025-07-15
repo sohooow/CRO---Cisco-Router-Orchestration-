@@ -20,6 +20,7 @@ device = {
 
 
 def ssh_configure_netmiko(config_commands):
+    """Send CLI commands to the router using Netmiko."""
     try:
         connection = ConnectHandler(**device)
 
@@ -35,16 +36,16 @@ def ssh_configure_netmiko(config_commands):
         connection.disconnect()
 
         return output
-
     except NetMikoAuthenticationException:
-        return "Error : Authentification failed."
+        return "Error: Authentication failed."
     except NetMikoTimeoutException:
-        return "Error : Connection timed exceeded."
+        return "Error: Connection timed out."
     except Exception as e:
-        return f"Unexcepted error : {str(e)}"
+        return f"Unexpected error: {str(e)}"
 
 
 def send_commit_rpc():
+    """Commit NETCONF candidate configuration."""
     try:
         with manager.connect(
             host=device["host"],
@@ -60,15 +61,16 @@ def send_commit_rpc():
             response = m.commit()
             return response.xml
     except Exception as e:
-        return f"Error during the commit : {str(e)}"
+        return f"Error during the commit: {str(e)}"
 
 
 def load_netconf_template(template_path, variables: dict):
+    """Load and format a NETCONF XML template."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     full_path = os.path.join(base_dir, template_path)
 
     if not os.path.exists(full_path):
-        raise FileNotFoundError(f"Template not found : {full_path}")
+        raise FileNotFoundError(f"Template not found: {full_path}")
 
     with open(full_path, "r", encoding="utf-8") as f:
         template = f.read()
@@ -76,6 +78,7 @@ def load_netconf_template(template_path, variables: dict):
 
 
 def ssh_configure_netconf(xml_payload):
+    """Send NETCONF XML payload to the router."""
     try:
         with manager.connect(
             host=device["host"],
@@ -97,7 +100,7 @@ def ssh_configure_netconf(xml_payload):
             response = m.edit_config(target="candidate", config=config_element)
             return response.xml
     except Exception as e:
-        return f" NETCONF error : {str(e)}"
+        return f"NETCONF error: {str(e)}"
 
 
 def sendConfig(
@@ -108,6 +111,7 @@ def sendConfig(
     given_action,
     send_mode,
 ):
+    """Send configuration to the router (CLI or NETCONF) and return the result."""
     match given_action:
         case "Create":
             config_commands = [
@@ -139,9 +143,7 @@ def sendConfig(
 
             get_interfaces_details()
 
-            if output:
-                return output
-
+            return output
         except Exception as e:
             return {"error": f"Error in orchestration(): {str(e)}"}
 
@@ -154,7 +156,7 @@ def sendConfig(
                 else given_interface_name
             )
 
-            if given_action == "Create" or given_action == "Update":
+            if given_action in ("Create", "Update"):
                 xml_payload = load_netconf_template(
                     "templates_netconf/create_update_interface_native.xml",
                     {
@@ -177,25 +179,15 @@ def sendConfig(
             commit_result = send_commit_rpc()
 
             return {"edit-config": edit_result, "commit": commit_result}
-
         except Exception as e:
-            return {"error": f" NETCONF Error: {str(e)}"}
+            return {"error": f"NETCONF Error: {str(e)}"}
 
 
 def get_interfaces_details():
+    """Retrieve interface details from the router using CLI."""
     command = "show ip interface brief"
-
     try:
         output = ssh_configure_netmiko(command)
-
-        if isinstance(output, str):
-            pass
-
-        if isinstance(output, list):
-            for interface in output:
-                pass
-        else:
-            pass
 
         return output
     except Exception as e:

@@ -1,9 +1,9 @@
 import os
 import sys
 
-#  Add the root folder (with manage.py) to sys.path
-racine = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(racine)
+# Add the root folder (with manage.py) to sys.path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(root_dir)
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "OrchestrationRouteurCISCO.settings")
 
@@ -18,22 +18,22 @@ from django.db import IntegrityError
 
 from orchestration.models import Interface, Log, Router, User
 
-# Retrieve environment variables to avoid hardcoding passwords
+# Retrieve environment variables for passwords
 ROUTER_PASSWORD = os.getenv("ROUTER_PASSWORD", "")
 ROUTER_ENABLE_PASSWORD = os.getenv("ROUTER_ENABLE_PASSWORD", "")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 DEFAULT_PASSWORD = os.getenv("DEFAULT_PASSWORD", "")
 USER_PASSWORD = os.getenv("USER_PASSWORD", "")
 
-
 User = get_user_model()
 
-#  Create permission groups
-read_only_group, created = Group.objects.get_or_create(name="read-only")
-read_write_group, created = Group.objects.get_or_create(name="read-write")
+# Create permission groups
+read_only_group, _ = Group.objects.get_or_create(name="read-only")
+read_write_group, _ = Group.objects.get_or_create(name="read-write")
 
 
 def add_all_perms(model, group):
+    """Add all permissions for a model to a group."""
     ct = ContentType.objects.get_for_model(model)
     perms = Permission.objects.filter(content_type=ct)
     for perm in perms:
@@ -41,21 +41,22 @@ def add_all_perms(model, group):
 
 
 def add_view_perms(model, group):
+    """Add only view permissions for a model to a group."""
     ct = ContentType.objects.get_for_model(model)
     view_perms = Permission.objects.filter(content_type=ct, codename__startswith="view")
     for perm in view_perms:
         group.permissions.add(perm)
 
 
+# Assign permissions to groups
 for model in [Router, Interface, User, Log]:
     add_all_perms(model, read_write_group)
-
 for model in [Router, Interface, User, Log]:
     add_view_perms(model, read_only_group)
 
 
-# Function to create users with error handling if user already exists
 def create_user_if_not_exists(username, password, role, is_superuser=False, group=None):
+    """Create a user if it does not already exist."""
     try:
         if not User.objects.filter(username=username).exists():
             if is_superuser:
@@ -75,7 +76,7 @@ def create_user_if_not_exists(username, password, role, is_superuser=False, grou
         print(f"Error: user '{username}' already exists (IntegrityError captured).")
 
 
-#  Create users
+# Create admin and default users
 create_user_if_not_exists(
     "admin",
     ADMIN_PASSWORD,
@@ -83,10 +84,9 @@ create_user_if_not_exists(
     is_superuser=True,
     group=read_write_group,
 )
+create_user_if_not_exists("default", DEFAULT_PASSWORD, "normal", group=read_only_group)
 
-create_user_if_not_exists("default", DEFAULT_PASSWORD, "normal", read_only_group)
-
-# Create router
+# Create router if it does not exist
 try:
     if not Router.objects.filter(ip_address="172.16.10.11").exists():
         Router.objects.create(
