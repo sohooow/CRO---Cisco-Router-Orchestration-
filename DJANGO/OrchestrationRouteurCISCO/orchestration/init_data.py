@@ -21,9 +21,8 @@ from orchestration.models import Interface, Log, Router, User
 # Retrieve environment variables to avoid hardcoding passwords
 ROUTER_PASSWORD = os.getenv("ROUTER_PASSWORD", "")
 ROUTER_ENABLE_PASSWORD = os.getenv("ROUTER_ENABLE_PASSWORD", "")
-SUPERADMIN_PASSWORD = os.getenv("SUPERADMIN_PASSWORD", "")
-READWRITE_PASSWORD = os.getenv("READWRITE_PASSWORD", "")
-READONLY_PASSWORD = os.getenv("READONLY_PASSWORD", "")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+DEFAULT_PASSWORD = os.getenv("DEFAULT_PASSWORD", "")
 USER_PASSWORD = os.getenv("USER_PASSWORD", "")
 
 
@@ -78,19 +77,15 @@ def create_user_if_not_exists(username, password, role, is_superuser=False, grou
 
 #  Create users
 create_user_if_not_exists(
-    "superadmin",
-    SUPERADMIN_PASSWORD,
+    "admin",
+    ADMIN_PASSWORD,
     "admin",
     is_superuser=True,
     group=read_write_group,
 )
-create_user_if_not_exists(
-    "readwrite", READWRITE_PASSWORD, "normal", group=read_write_group
-)
-create_user_if_not_exists(
-    "readonly", READONLY_PASSWORD, "normal", group=read_only_group
-)
-create_user_if_not_exists("user", USER_PASSWORD, "normal")
+
+create_user_if_not_exists("default", DEFAULT_PASSWORD, "normal", read_only_group)
+create_user_if_not_exists("user", USER_PASSWORD, "normal" )
 
 # Create router
 try:

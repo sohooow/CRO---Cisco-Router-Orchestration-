@@ -7,6 +7,7 @@ services:
         /wait-for-mysql.sh &&
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
+        python orchestration/init_data.py &&
         gunicorn OrchestrationRouteurCISCO.wsgi:application --bind 0.0.0.0:8000 --workers 4
       "
     expose:
