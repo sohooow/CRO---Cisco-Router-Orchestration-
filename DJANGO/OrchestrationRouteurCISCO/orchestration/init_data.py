@@ -85,7 +85,6 @@ create_user_if_not_exists(
 )
 
 create_user_if_not_exists("default", DEFAULT_PASSWORD, "normal", read_only_group)
-create_user_if_not_exists("user", USER_PASSWORD, "normal" )
 
 # Create router
 try:

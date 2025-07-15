@@ -6,7 +6,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.http import HttpResponse, JsonResponse
@@ -14,6 +14,7 @@ from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from rest_framework import viewsets
 
 import cisco_config_tool
@@ -62,7 +63,7 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
-                return redirect("")  # Redirect to homepage or protected page
+                return redirect("/config")
             else:
                 form.add_error(None, "Incorrect credentials.")
     else:
@@ -243,13 +244,6 @@ class ModifySubInterface(View):
         sub_interface = data.get("subInterface")
         action = data.get("action")
         mode = data.get("mode")
-
-        print("interface_name:", interface_name)
-        print("ip_address:", ip_address)
-        print("subnet_mask:", subnet_mask)
-        print("sub_interface:", sub_interface)
-        print("action:", action)
-        print("mode:", mode)
 
         if not all(
             [interface_name, ip_address, subnet_mask, sub_interface, action, mode]
@@ -441,7 +435,7 @@ def sync_router(request):
 
 # Custom login view inherited from LoginView to redirect authenticated users
 class MyLoginView(LoginView):
-    template_name = "registration/login.html"
+    template_name = "login.html"
     redirect_authenticated_user = True
 
 
@@ -512,3 +506,11 @@ def delete_subinterface(request, interface, ipaddress):
         "is_readwrite": user_is_readwrite(request.user),
     }
     return render(request, "subinterface_form_delete.html", data)
+
+
+@require_POST
+def logout_view(request):
+    if request.headers.get("Hx-Request") != "true":
+        return JsonResponse({"error": "Invalid HTMX request"}, status=400)
+    logout(request)
+    return JsonResponse({"redirect": "/"})

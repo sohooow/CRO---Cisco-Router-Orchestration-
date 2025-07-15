@@ -162,3 +162,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    const xhr = evt.detail.xhr;
+    const path = evt.detail.requestConfig.path;
+
+    if (path === '/logout/') {
+        try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+        } catch (e) {
+            console.error("Réponse logout non JSON :", xhr.responseText);
+        }
+    }
+});

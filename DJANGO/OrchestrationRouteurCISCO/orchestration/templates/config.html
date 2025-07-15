@@ -27,7 +27,9 @@
 
 </head>
 
+
 <body>
+    <div id="logout-response" style="display: none;"></div>
 
     <!-- Header -->
     <div class="header-container">
@@ -36,10 +38,16 @@
             hx-target="#interfaceTable tbody" hx-swap="innerHTML">
             Refresh interfaces' list
         </button>
-        <button id="logout" class="btn btn-danger btn-mode" hx-post="/logout/" hx-target="body" hx-swap="innerHTML"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <button
+            id="logout"
+            class="btn btn-danger btn-mode"
+            hx-post="/logout/"
+            hx-swap="none"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        >
             Logout
         </button>
+
 
     </div>
 
@@ -202,14 +210,13 @@
 
 
         document.getElementById('refresh').addEventListener('click', function () {
-            // Appel AJAX POST pour synchroniser la base (en parallèle)
             fetch('/sync-router/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    router_ip: '172.16.10.11'  // ou dynamique 
+                    router_ip: '172.16.10.11'
                 })
             }).then(response => response.json())
                 .then(data => {
@@ -222,6 +229,25 @@
                 .catch(err => console.error('Error:', err));
         });
 
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+
+            const path = evt.detail.requestConfig.path;
+            const status = evt.detail.xhr.status;
+            const responseText = evt.detail.xhr.responseText;
+
+            if (path === '/logout/' && status === 200) {
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        console.warn("Pas de redirect dans la réponse JSON:", data);
+                    }
+                } catch (e) {
+                    console.error("Erreur JSON logout:", e, "Réponse:", responseText);
+                }
+            }
+        });
     </script>
 
 </body>
