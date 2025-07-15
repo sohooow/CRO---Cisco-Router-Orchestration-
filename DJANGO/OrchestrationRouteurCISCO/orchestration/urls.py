@@ -11,7 +11,7 @@ from .views import (
     UserViewSet,
 )
 
-# Router pour les API REST
+# Router for the API REST
 router = DefaultRouter()
 router.register(r"routers", RouterViewSet)
 router.register(r"logs", LogViewSet)
@@ -19,7 +19,7 @@ router.register(r"interfaces", InterfaceViewSet)
 router.register(r"users", UserViewSet)
 
 
-# Inclusion des API REST sous `/api/`
+# Inclusion of API REST under `/api/`
 urlpatterns = [
     path("api/", include(router.urls)),
     path("", LoginView.as_view(template_name="login.html"), name="login"),
