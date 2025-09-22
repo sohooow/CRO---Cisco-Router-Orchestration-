@@ -28,3 +28,12 @@ Admin password : projetinfo1A
 # Read only
 default user : default
 default user password : default123
+
+### The application
+
+<img width="1469" height="916" alt="image" src="https://github.com/user-attachments/assets/97ff2835-068d-4c01-9d1b-a7d361685149" />
+
+<img width="702" height="401" alt="image" src="https://github.com/user-attachments/assets/c57511ef-d930-4e9c-a5ce-7a3db134a60d" />
+
+
+
