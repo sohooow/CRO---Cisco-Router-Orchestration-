@@ -1,11 +1,11 @@
-### Downloading the application
+# Downloading the application
 
 Download the application by running:
 `git clone https://github.com/b3rnvrd/OrchestrationRouteurCISCO.git`
 
 
 
-### Building and running the application
+# Building and running the application
 
 When you're ready, start your application by running:
 `docker compose up -d`.
@@ -15,17 +15,17 @@ When you're ready, start your application by running:
 Your application will be available at http://localhost:8080.
 
 
-### Using the application
+# Using the application
 
 Make sure you are connected to the VPN in order to reach the router
 
-### Users
+# Users
 
-# Read/Write
+### Read/Write
 Admin user : admin
 Admin password : projetinfo1A
 
-# Read only
+### Read only
 default user : default
 default user password : default123
 
